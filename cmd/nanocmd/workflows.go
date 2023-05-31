@@ -9,6 +9,7 @@ import (
 	"github.com/micromdm/nanocmd/workflow/fvenable"
 	"github.com/micromdm/nanocmd/workflow/fvrotate"
 	"github.com/micromdm/nanocmd/workflow/inventory"
+	"github.com/micromdm/nanocmd/workflow/lock"
 	"github.com/micromdm/nanocmd/workflow/profile"
 )
 
@@ -48,6 +49,12 @@ func registerWorkflows(logger log.Logger, r registerer, s *storageConfig, e work
 		return fmt.Errorf("creating cmdplan workflow: %w", err)
 	} else if err = r.RegisterWorkflow(w); err != nil {
 		return fmt.Errorf("registering cmdplan workflow: %w", err)
+	}
+
+	if w, err = lock.New(e, s.inventory, lock.WithLogger(logger)); err != nil {
+		return fmt.Errorf("creating lock workflow: %w", err)
+	} else if err = r.RegisterWorkflow(w); err != nil {
+		return fmt.Errorf("registering lock workflow: %w", err)
 	}
 
 	return nil
