@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>  
+        <key>CommandUUID</key>
+        <string>DevInfo001</string>
+        <key>QueryResponses</key>
+        <dict>  
+                <key>BuildVersion</key>
+                <string>19H12</string>
+                <key>DeviceName</key>
+                <string>My iPhone</string>
+                <key>Model</key>
+                <string>MN9H2LL</string>
+                <key>ModelName</key>
+                <string>iPhone</string>
+                <key>OSVersion</key>
+                <string>15.7</string>
+                <key>SerialNumber</key>
+                <string>BNPTFLNZHG7K</string>
+        </dict>
+        <key>Status</key>
+        <string>Acknowledged</string>
+        <key>UDID</key>
+        <string>UDID001</string>
+</dict>
+</plist>

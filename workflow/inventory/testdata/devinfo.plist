@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CommandUUID</key>
+	<string>53115671-3f45-49f5-b7cb-22ede8b8afdb</string>
+	<key>QueryResponses</key>
+	<dict>
+		<key>Model</key>
+		<string>MacBookPro11,3</string>
+		<key>ProductName</key>
+		<string>MacBookPro11,3</string>
+		<key>UDID</key>
+		<string>AAABBBCCC111222333</string>
+	</dict>
+	<key>Status</key>
+	<string>Acknowledged</string>
+	<key>UDID</key>
+	<string>AAABBBCCC111222333</string>
+</dict>
+</plist>

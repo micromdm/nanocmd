@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>  
+        <key>CommandUUID</key>
+        <string>53115671-3f45-49f5-b7cb-22ede8b8afdc</string>
+        <key>SecurityInfo</key>
+        <dict>  
+                <key>AuthenticatedRootVolumeEnabled</key>
+                <true/>
+                <key>BootstrapTokenAllowedForAuthentication</key>
+                <string>not supported</string>
+                <key>BootstrapTokenRequiredForKernelExtensionApproval</key>
+                <false/>
+                <key>BootstrapTokenRequiredForSoftwareUpdate</key>
+                <false/>
+                <key>FDE_Enabled</key>
+                <false/>
+                <key>FirewallSettings</key>
+                <dict>  
+                        <key>AllowSigned</key>
+                        <true/>
+                        <key>AllowSignedApp</key>
+                        <true/>
+                        <key>Applications</key>
+                        <array/>
+                        <key>BlockAllIncoming</key>
+                        <false/>
+                        <key>FirewallEnabled</key>
+                        <false/>
+                        <key>LoggingEnabled</key>
+                        <true/>
+                        <key>LoggingOption</key>
+                        <string>throttled</string>
+                        <key>StealthMode</key>
+                        <false/>
+                </dict>
+                <key>FirmwarePasswordStatus</key>
+                <dict/>
+                <key>ManagementStatus</key>
+                <dict>  
+                        <key>EnrolledViaDEP</key>
+                        <false/>
+                        <key>IsActivationLockManageable</key>
+                        <false/>
+                        <key>IsUserEnrollment</key>
+                        <false/>
+                        <key>UserApprovedEnrollment</key>
+                        <true/>
+                </dict>
+                <key>RemoteDesktopEnabled</key>
+                <true/>
+                <key>SecureBoot</key>
+                <dict>  
+                        <key>ExternalBootLevel</key>
+                        <string>not supported</string>
+                        <key>SecureBootLevel</key>
+                        <string>off</string>
+                        <key>WindowsBootLevel</key>
+                        <string>not supported</string>
+                </dict>
+                <key>SystemIntegrityProtectionEnabled</key>
+                <true/>
+        </dict>
+        <key>Status</key>
+        <string>Acknowledged</string>
+        <key>UDID</key>
+        <string>AAABBBCCC111222333</string>
+</dict>
+</plist>

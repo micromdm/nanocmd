@@ -1,0 +1,439 @@
+openapi: 3.0.0
+info:
+  version: 0.1.0
+  title: NanoCMD server API
+servers:
+  - url: http://[::1]:9003/
+paths:
+  /version:
+    get:
+      description: Returns the running NanoCMD server version
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: 
+                  version:
+                    type: string
+                    example: "v0.1.0"
+  /webhook:
+    post:
+      description: Handler for MicroMDM-compatible webhook callback. This endpoint is intended to be called by MicroMDM (or NanoMDM, or other compatible MDM server) with MDM events and command responses. See MicroMDM (or NanoMDM) for complete request body format.
+      requestBody:
+        description: Webhook data.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Webhook'
+      responses:
+        '200':
+          description: The webhook was processed without error.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/Error'
+  /v1/workflow/{name}/start:
+    post:
+      description: Start a workflow.
+      security:
+        - basicAuth: []
+      responses:
+        '200':
+          description: Workflow successfully started.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  instance_id:
+                    type: string
+                    example: 71da093b-6d0a-4ba1-992c-cf911e0115d4
+                    description: The instance ID of the started step. All follow-on workflow steps should descend from and keep this instance ID when queueing commands.
+        '401':
+           $ref: '#/components/responses/UnauthorizedError'
+        '400':
+           $ref: '#/components/responses/JSONBadRequest'
+        '500':
+           $ref: '#/components/responses/JSONError'
+    parameters:
+      - $ref: '#/components/parameters/workflowName'
+      - $ref: '#/components/parameters/enrollmentID'
+      - $ref: '#/components/parameters/context'
+  /v1/event/{name}:
+    get:
+      description: Retrieve the event subscription.
+      security:
+        - basicAuth: []
+      responses:
+        '200':
+          description: Event Subscription.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventSubscription'
+        '401':
+           $ref: '#/components/responses/UnauthorizedError'
+        '400':
+           $ref: '#/components/responses/JSONBadRequest'
+        '500':
+           $ref: '#/components/responses/JSONError'
+      parameters:
+      - $ref: '#/components/parameters/eventName'
+    put:
+      description: Store the event subscription provided in the request body.
+      security:
+        - basicAuth: []
+      requestBody:
+        description: Event Subscription.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventSubscription'
+      responses:
+        '204':
+          description: Event Subscription successfully stored.
+        '401':
+           $ref: '#/components/responses/UnauthorizedError'
+        '400':
+           $ref: '#/components/responses/JSONBadRequest'
+        '500':
+           $ref: '#/components/responses/JSONError'
+      parameters:
+      - $ref: '#/components/parameters/eventName'
+  /v1/fvenable/profiletemplate:
+    get:
+      description: Returns the FileVault enable Configuration Profile template.
+      security:
+        - basicAuth: []
+      responses:
+        '200':
+          description: FileVault enable profile template mobileconfig.
+          content:
+            application/x-apple-aspen-config:
+              schema:
+                $ref: '#/components/schemas/Plist'
+        '401':
+           $ref: '#/components/responses/UnauthorizedError'
+  /v1/profile/{name}:
+    get:
+      description: Fetches the named raw profile.
+      security:
+        - basicAuth: []
+      responses:
+        '200':
+          description: Raw profile mobileconfig.
+          content:
+            application/x-apple-aspen-config:
+              schema:
+                $ref: '#/components/schemas/Plist'
+        '401':
+           $ref: '#/components/responses/UnauthorizedError'
+        '400':
+           $ref: '#/components/responses/JSONBadRequest'
+        '500':
+           $ref: '#/components/responses/JSONError'
+    put:
+      description: Uploads a raw profile. Signed profiles also supported.
+      security:
+        - basicAuth: []
+      requestBody:
+        description: Raw profile mobileconfig.
+        required: true
+        content:
+          application/x-apple-aspen-config:
+            schema:
+              $ref: '#/components/schemas/Plist'
+      responses:
+        '204':
+          description: Profile successfully stored.
+        '401':
+           $ref: '#/components/responses/UnauthorizedError'
+        '400':
+           $ref: '#/components/responses/JSONBadRequest'
+        '500':
+           $ref: '#/components/responses/JSONError'
+    delete:
+      description: Deletes the named profile.
+      security:
+        - basicAuth: []
+      responses:
+        '204':
+          description: Profile successfully deleted.
+        '401':
+           $ref: '#/components/responses/UnauthorizedError'
+        '400':
+           $ref: '#/components/responses/JSONBadRequest'
+        '500':
+           $ref: '#/components/responses/JSONError'
+    parameters:
+      - $ref: '#/components/parameters/profileName'
+  /v1/profiles:
+    get:
+      description: Retrieve profile metadata.
+      security:
+        - basicAuth: []
+      responses:
+        '200':
+          description: Profile metadata.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  $ref: '#/components/schemas/Profile'
+        '401':
+           $ref: '#/components/responses/UnauthorizedError'
+        '500':
+           $ref: '#/components/responses/JSONError'
+      parameters:
+        - in: query
+          name: name
+          description: User-defined name of profile.
+          schema:
+            type: array
+            items:
+              type: string
+              example: myprofile
+          required: false
+  /v1/cmdplan/{name}:
+    get:
+      description: Retrieve and return a named command plan as JSON.
+      security:
+        - basicAuth: []
+      responses:
+        '200':
+          description: Command plan.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CMDPlan'
+        '400':
+           $ref: '#/components/responses/JSONBadRequest'
+        '401':
+           $ref: '#/components/responses/UnauthorizedError'
+        '500':
+           $ref: '#/components/responses/JSONError'
+    put:
+      description: Upload a named JSON command plan.
+      security:
+        - basicAuth: []
+      requestBody:
+        description: Command plan.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CMDPlan'
+      responses:
+        '204':
+          description: Successful upload of command plan.
+        '400':
+           $ref: '#/components/responses/JSONBadRequest'
+        '401':
+           $ref: '#/components/responses/UnauthorizedError'
+        '500':
+           $ref: '#/components/responses/JSONError'
+    parameters:
+    - $ref: '#/components/parameters/cmdPlanName'
+  /v1/inventory:
+    get:
+      description: Retrieve inventory data for enrollment IDs.
+      security:
+        - basicAuth: []
+      responses:
+        '200':
+          description: Inventory data for enrollment IDs. Note the keys returned per enrollment ID can be, essentially, arbitrary (even most/many will be standard).
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: object
+                  properties:
+                    serial_number:
+                      type: string
+                    model:
+                      type: string
+                example:
+                  59FBE185-5E77-4493-B28B-272AD4138CA7: {serial_number: ZTMXJQTLFX, model: "VirtualMac2,1"}
+        '400':
+           $ref: '#/components/responses/JSONBadRequest'
+        '401':
+           $ref: '#/components/responses/UnauthorizedError'
+        '500':
+           $ref: '#/components/responses/JSONError'
+    parameters:
+      - $ref: '#/components/parameters/enrollmentID'
+components:
+  parameters:
+    enrollmentID:
+      name: id
+      in: query
+      description: Enrollment ID. Unique identifier of MDM enrollment. Often a device UDID or a user channel UUID.
+      required: true
+      explode: true
+      style: form
+      schema:
+        type: array
+        items:
+          type: string
+        minItems: 1
+        example: ["CFF1D100-BECC-4EA4-8445-2B87E2A87D7F", "A3FAAA18-50C6-4337-B5CC-43376F070DB8"]
+    workflowName:
+      name: name
+      in: path
+      description: Name of NanoCMD workflow.
+      required: true
+      style: simple
+      schema:
+        type: string
+        example: 'io.micromdm.wf.example.v1'
+    eventName:
+      name: name
+      in: path
+      description: User-defined name of Event Subscription.
+      required: true
+      style: simple
+      schema:
+        type: string
+        example: myeventname
+    cmdPlanName:
+      name: name
+      in: path
+      description: User-defined name of Command Plan.
+      required: true
+      style: simple
+      schema:
+        type: string
+        example: mycmdplan
+    context:
+      name: context
+      in: query
+      description: Workflow-dependent context.
+      required: false
+      schema:
+        type: string
+    profileName:
+      name: name
+      in: path
+      description: User-defined name of Profile.
+      required: true
+      style: simple
+      schema:
+        type: string
+        example: myprofile
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+  responses:
+    UnauthorizedError:
+      description: API key is missing or invalid.
+      headers:
+        WWW-Authenticate:
+          schema:
+            type: string
+    BadRequest:
+      description: There was a problem with the supplied request. The request was in an incorrect format or other request data error. See server logs for more information.
+      content:
+        text/plain:
+          schema:
+            type: string
+            example: Bad Request
+    Error:
+      description: An internal server error occured on this endpoint. See server logs for more information.
+      content:
+        text/plain:
+          schema:
+            type: string
+            example: Internal Server Error
+    JSONBadRequest:
+      description: There was a problem with the supplied request. The request was in an incorrect format or other request data error.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/JSONError'  
+    JSONError:
+      description: An internal server error occured on this endpoint.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/JSONError'
+  schemas:
+    CMDPlan:
+      type: object
+      properties:
+        profile_names:
+          type: array
+          items:
+            type: string
+            example: "profile1"
+        manifest_urls:
+          type: array
+          items:
+            type: string
+            example: "https://example.com/manifest"
+            format: url
+        device_configured:
+          type: boolean
+    Profile:
+      type: object
+      properties:
+        identifier:
+          type: string
+          example: com.example.profile
+        uuid:
+          type: string
+          example: D8F1F355-99EE-4A63-88DE-FBBBFCFF4DB6
+    EventSubscription:
+      type: object
+      required: [event, workflow]
+      properties:
+        event:
+          type: string
+          description: Event type to subscribe to.
+          enum: [Enrollment, Authenticate, TokenUpdate, CheckOut]
+        workflow:
+          type: string
+          description: Name of NanoCMD workflow.
+          example: "io.micromdm.wf.example.v1"
+        context:
+          type: string
+          description: Workflow-dependent context.
+    JSONError:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "it was sunny outside"
+    Webhook:
+      type: object
+      properties:
+        topic:
+          type: string
+          example: mdm.Connect
+        event_id:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        acknowledge_event:
+          type: object
+        checkin_event:
+          type: object
+    Plist:
+      type: string
+      description: Apple XML property list. Depending on the context may or may not be CMS/PKCS#7 signed.
+      example: |-
+        <?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+        <plist version="1.0">
+        <dict>
+        ...
+        </dict>
+        </plist>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>PayloadContent</key>
+	<array>
+		<dict>
+			<key>DefaultBrowserSettingEnabled</key>
+			<true/>
+			<key>EnableMediaRouter</key>
+			<false/>
+			<key>PayloadDisplayName</key>
+			<string>Google Chrome</string>
+			<key>PayloadIdentifier</key>
+			<string>com.google.Chrome.DB0791F4-AF79-4DCF-8A74-32A9169BEC8B</string>
+			<key>PayloadType</key>
+			<string>com.google.Chrome</string>
+			<key>PayloadUUID</key>
+			<string>BCD365EE-8534-4A52-B73A-53A2F9612A7B</string>
+			<key>PayloadVersion</key>
+			<integer>1</integer>
+		</dict>
+		<dict>
+			<key>DefaultBrowserPromptingState2</key>
+			<integer>1</integer>
+			<key>DefaultBrowserPromptingState3</key>
+			<integer>2</integer>
+			<key>PayloadDisplayName</key>
+			<string>Safari</string>
+			<key>PayloadIdentifier</key>
+			<string>com.apple.Safari.D93BD016-56DB-4F71-8F99-62D109AC1901</string>
+			<key>PayloadType</key>
+			<string>com.apple.Safari</string>
+			<key>PayloadUUID</key>
+			<string>822A0441-20B8-4C6C-A2C2-10C88332ABE2</string>
+			<key>PayloadVersion</key>
+			<integer>1</integer>
+		</dict>
+	</array>
+	<key>PayloadDisplayName</key>
+	<string>Google Chrome Default Browser</string>
+	<key>PayloadIdentifier</key>
+	<string>0DA6B871-623D-400A-B0EB-3BE489E39F2A</string>
+	<key>PayloadOrganization</key>
+	<string>Org</string>
+	<key>PayloadType</key>
+	<string>Configuration</string>
+	<key>PayloadUUID</key>
+	<string>D0CCE647-B1D6-49B0-82BC-C1BCC8A33218</string>
+	<key>PayloadVersion</key>
+	<integer>1</integer>
+</dict>
+</plist>
