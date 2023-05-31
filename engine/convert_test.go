@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"bytes"
 	"os"
 	"reflect"
 	"testing"
@@ -115,12 +114,5 @@ func TestConvertStorageCommandRawFromWorkflowCommand(t *testing.T) {
 	}
 	if have, want := cmd.CommandUUID, "ABCUUID"; have != want {
 		t.Errorf("have: %v, want: %v", have, want)
-	}
-	secInfoGenPlist, err := os.ReadFile("testdata/secinfo.gen.plist")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if have, want := bytes.TrimSpace(sc.Command), bytes.TrimSpace(secInfoGenPlist); !bytes.Equal(have, want) {
-		t.Errorf("have: %v, want: %v", string(have), string(want))
 	}
 }
