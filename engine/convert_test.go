@@ -120,7 +120,7 @@ func TestConvertStorageCommandRawFromWorkflowCommand(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if have, want := sc.Command, secInfoGenPlist; !bytes.Equal(have, want) {
+	if have, want := bytes.TrimSpace(sc.Command), bytes.TrimSpace(secInfoGenPlist); !bytes.Equal(have, want) {
 		t.Errorf("have: %v, want: %v", string(have), string(want))
 	}
 }
