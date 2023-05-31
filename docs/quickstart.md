@@ -4,7 +4,7 @@ This quickstart guide is intended to quickly get a functioning NanoCMD instance 
 
 ## Requirements
 
-* A functioning NanoMDM or MicroMDM (v1.9.0 or later) server.
+* A functioning NanoMDM or MicroMDM (v1.11.0 or later) server.
   * You'll need to know the URLs of the command submission and APNs push API endpoints.
   * For [NanoMDM](https://github.com/micromdm/nanomdm/blob/main/docs/operations-guide.md#enqueue) this is usally `/v1/enqueue/` and `/v1/push/` endpoints.
   * For [MicroMDM](https://github.com/micromdm/micromdm/blob/main/docs/user-guide/api-and-webhooks.md#schedule-raw-commands-with-the-api) this is usually `/v1/commands` and `/push`.
