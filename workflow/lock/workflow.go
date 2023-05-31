@@ -106,7 +106,7 @@ func (w *Workflow) StepCompleted(ctx context.Context, stepResult *workflow.StepR
 		return workflow.ErrIncorrectCommandType
 	}
 	if err := response.Validate(); err != nil {
-		return fmt.Errorf("validating rotate response: %w", err)
+		return fmt.Errorf("validating lock response: %w", err)
 	}
 
 	logs := []interface{}{
