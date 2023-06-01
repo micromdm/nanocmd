@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"time"
 
 	"github.com/jessepeterson/mdmcommands"
 	"github.com/micromdm/nanocmd/log"
@@ -66,18 +67,33 @@ func randomDigits(n int) string {
 	return string(digits)
 }
 
+func (w *Workflow) storeLock(ctx context.Context, id, pin string) error {
+	return w.store.StoreInventoryValues(ctx, id, storage.Values{
+		WorkflowName + ".pin":  pin,
+		WorkflowName + ".sent": time.Now(),
+		storage.KeyLastSource:  WorkflowName,
+	})
+}
+
+func (w *Workflow) updateLock(ctx context.Context, id, msg string) error {
+	v := storage.Values{
+		WorkflowName + ".received": time.Now(),
+		storage.KeyLastSource:      WorkflowName,
+	}
+	if msg != "" {
+		v[WorkflowName+".message_result"] = msg
+	}
+	return w.store.StoreInventoryValues(ctx, id, v)
+}
+
 func (w *Workflow) Start(ctx context.Context, step *workflow.StepStart) error {
 	for _, id := range step.IDs {
 		// generate us a PIN
 		pin := randomDigits(6)
 
-		// store it in the device's inventory
-		err := w.store.StoreInventoryValues(ctx, id, storage.Values{
-			"lock_pin":            pin,
-			storage.KeyLastSource: WorkflowName,
-		})
+		err := w.storeLock(ctx, id, pin)
 		if err != nil {
-			return fmt.Errorf("store inventory value for %s: %w", id, err)
+			return fmt.Errorf("store inventory values for %s: %w", id, err)
 		}
 
 		// create MDM command
@@ -114,11 +130,16 @@ func (w *Workflow) StepCompleted(ctx context.Context, stepResult *workflow.StepR
 		logkeys.EnrollmentID, stepResult.ID,
 		logkeys.Message, "lock received",
 	}
+	msg := ""
 	if response.MessageResult != nil && *response.MessageResult != "" {
-		logs = append(logs, "message_result", *response.MessageResult)
+		msg = *response.MessageResult
+		logs = append(logs, "message_result", msg)
 	}
-
 	ctxlog.Logger(ctx, w.logger).Debug(logs...)
+
+	if err := w.updateLock(ctx, stepResult.ID, msg); err != nil {
+		return fmt.Errorf("update inventory values for %s: %w", stepResult.ID, err)
+	}
 
 	return nil
 }
