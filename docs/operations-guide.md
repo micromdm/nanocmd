@@ -334,3 +334,10 @@ dock,munki,-uakel,pppc
 ```
 
 Would try to make sure that the profiles with the names of `dock`, `munki`, and `pppc` in the profile subsystem are installed (if they are not already) while making sure the `uakel` profile is removed (if it is installed).
+
+### Lock Workflow
+
+* Workflow name: `io.micromdm.wf.lock.v1`
+* Start value/context: (n/a)
+
+The lock workflow sends the device a lock command using a random PIN code that is escrowed to the inventory subsytem.
