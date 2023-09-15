@@ -5,11 +5,12 @@ OSARCH=$(shell go env GOHOSTOS)-$(shell go env GOHOSTARCH)
 NANOCMD=\
 	nanocmd-darwin-amd64 \
 	nanocmd-darwin-arm64 \
-	nanocmd-linux-amd64
+	nanocmd-linux-amd64 \
+	nanocmd-linux-arm64 \
+	nanocmd-linux-arm \
+	nanocmd-windows-amd64.exe
 
 my: nanocmd-$(OSARCH)
-
-docker: nanocmd-linux-amd64
 
 $(NANOCMD): cmd/nanocmd
 	GOOS=$(word 2,$(subst -, ,$@)) GOARCH=$(word 3,$(subst -, ,$(subst .exe,,$@))) go build $(LDFLAGS) -o $@ ./$<
@@ -31,12 +32,9 @@ nanocmd-%-$(VERSION).zip: nanocmd-%
 clean:
 	rm -rf nanocmd-*
 
-release: \
-	nanocmd-darwin-amd64-$(VERSION).zip \
-	nanocmd-darwin-arm64-$(VERSION).zip \
-	nanocmd-linux-amd64-$(VERSION).zip
+release: $(foreach bin,$(NANOCMD),$(subst .exe,,$(bin))-$(VERSION).zip)
 
 test:
 	go test -v -cover -race ./...
 
-.PHONY: my docker $(NANOCMD) clean release test
+.PHONY: my $(NANOCMD) clean release test

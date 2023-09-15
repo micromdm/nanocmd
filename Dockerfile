@@ -1,7 +1,13 @@
 FROM gcr.io/distroless/static
 
-COPY nanocmd-linux-amd64 /nanocmd
+ARG TARGETOS TARGETARCH
+
+COPY nanocmd-$TARGETOS-$TARGETARCH /app/nanocmd
 
 EXPOSE 9003
 
-ENTRYPOINT ["/nanocmd"]
+VOLUME ["/app/db"]
+
+WORKDIR /app
+
+ENTRYPOINT ["/app/nanocmd"]

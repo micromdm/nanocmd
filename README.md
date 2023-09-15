@@ -22,6 +22,15 @@ A guide to getting NanoCMD up and running quickly.
 - [Operations Guide](docs/operations-guide.md)  
 A brief overview of operating the NanoCMD server including command line and API interfaces.
 
+## Getting the latest version
+
+* Release `.zip` files containing the servershould be attached to every [GitHub release](https://github.com/micromdm/nanocmd/releases).
+  * Release zips are also [published](https://github.com/micromdm/nanocmd/actions) for every `main` branch commit.
+* A Docker container is built and [published to the GHCR.io](http://ghcr.io/micromdm/nanocmd) registry for every release.
+  * `docker pull ghcr.io/micromdm/nanocmd:latest` — `docker run ghcr.io/jessepeterson/kmfddm:latest`
+  * A Docker container is also published for every `main` branch commit (and tagged with `:main`)
+* If you have a [Go toolchain installed](https://go.dev/doc/install) you can checkout the source and simply run `make`.
+
 ## What NanoCMD is not
 
 NanoCMD is neat. But there are some things it does not do. There are also some things that are out of scope that it may never do. Here's some of the things NanoCMD is not:
