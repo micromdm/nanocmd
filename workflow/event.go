@@ -11,8 +11,8 @@ var ErrEventsNotSupported = errors.New("events not supported for this workflow")
 // EventFlag is a bitmask of event types.
 type EventFlag uint
 
-// Storage backends (persistent storage) are likely to use these numeric
-// values. Treat these as append-only: Order and position matter.
+// Storage backends (persistent storage) may use these numeric values.
+// So treat these as append-only: order and position matter.
 const (
 	EventAllCommandResponse EventFlag = 1 << iota
 	EventAuthenticate

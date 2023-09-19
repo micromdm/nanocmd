@@ -129,7 +129,7 @@ func storageStepCommandFromRawResponse(reqType string, rawResp []byte) (*storage
 		ResultReport: rawResp,
 		Completed:    genResp.Status != "" && genResp.Status != "NotNow",
 	}
-	return sc, response, nil
+	return sc, response, sc.Validate()
 }
 
 // workflowCommandResponseFromRawResponse converts a raw XML plist of a command response to a workflow response.

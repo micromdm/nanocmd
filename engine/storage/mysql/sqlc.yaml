@@ -1,0 +1,25 @@
+version: 2
+sql:
+  - engine: "mysql"
+    queries:
+      - "query.sql"
+      - "query_event.sql"
+      - "query_worker.sql"
+    schema: "schema.sql"
+    gen:
+      go:
+        package: "sqlc"
+        out: "sqlc"
+        overrides:
+          - column: "steps.context"
+            go_type:
+              type: "byte"
+              slice: true
+          - column: "step_commands.command"
+            go_type:
+              type: "byte"
+              slice: true
+          - column: "id_commands.result"
+            go_type:
+              type: "byte"
+              slice: true

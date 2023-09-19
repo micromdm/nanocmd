@@ -3,6 +3,7 @@ package kv
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -33,6 +34,9 @@ func New(stepStore kv.TraversingBucket, idCmdStore kv.TraversingBucket, eventSto
 
 // RetrieveCommandRequestType implements the storage interface method.
 func (s *KV) RetrieveCommandRequestType(ctx context.Context, id string, cmdUUID string) (string, bool, error) {
+	if id == "" || cmdUUID == "" {
+		return "", false, errors.New("empty id or command uuid")
+	}
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	// first check if we have a valid command
@@ -156,6 +160,23 @@ func (s *KV) StoreStep(ctx context.Context, step *storage.StepEnqueuingWithConfi
 	defer s.mu.Unlock()
 	// fabricate a unique ID to track this unique step
 	stepID := s.ider.ID()
+
+	if step != nil {
+		idCmdUUIDs := make(map[string]struct{})
+		for _, sc := range step.Commands {
+			for _, id := range step.IDs {
+				if _, ok := idCmdUUIDs[id+sc.CommandUUID]; ok {
+					return fmt.Errorf("duplicate command (id=%s, uuid=%s)", id, sc.CommandUUID)
+				}
+				idCmdUUIDs[id+sc.CommandUUID] = struct{}{}
+				if ok, err := kvIDCmdExists(ctx, s.idCmdStore, id, sc.CommandUUID); err != nil {
+					return fmt.Errorf("checking duplicate commands: %w", err)
+				} else if ok {
+					return fmt.Errorf("duplicate command (id=%s, uuid=%s)", id, sc.CommandUUID)
+				}
+			}
+		}
+	}
 
 	err := kvSetStep(ctx, s.stepStore, stepID, step)
 	if err != nil {

@@ -38,6 +38,10 @@ func TestEngineStorage(t *testing.T, newStorage func() storage.AllStorage) {
 	t.Run("testOutstanding", func(t *testing.T) {
 		testOutstanding(t, s)
 	})
+
+	t.Run("testEvent", func(t *testing.T) {
+		TestEventStorage(t, s)
+	})
 }
 
 func mainTest(t *testing.T, s storage.AllStorage) {
@@ -75,35 +79,6 @@ func mainTest(t *testing.T, s storage.AllStorage) {
 			&storage.StepEnqueuingWithConfig{},
 			true,
 			nil,
-		},
-		{
-			"missing_command_ReportResults",
-			&storage.StepEnqueuingWithConfig{
-				StepEnqueueing: storage.StepEnqueueing{
-					IDs: []string{fakeID},
-					StepContext: storage.StepContext{
-						WorkflowName: "workflow.name.test1",
-						InstanceID:   "A",
-					},
-					Commands: []storage.StepCommandRaw{
-						{
-							CommandUUID: "UUID-1",
-							RequestType: "DeviceInformation",
-						},
-					},
-				},
-			},
-			false,
-			[]responseTest{{
-				testName: "missing_ReportResults",
-				resp: &storage.StepCommandResult{
-					CommandUUID: "UUID-1",
-					Completed:   true,
-					// missing ReportResults (should error)
-				},
-				shouldBeCompleted: false,
-				shouldError:       true,
-			}},
 		},
 		{
 			"normal_test1_command_multi_id",
@@ -257,47 +232,41 @@ func mainTest(t *testing.T, s storage.AllStorage) {
 					},
 					Commands: []storage.StepCommandRaw{
 						{
-							CommandUUID: "UUID-1",
+							CommandUUID: "W-UUID-1",
 							RequestType: "DeviceInformation",
 						},
 						{
-							CommandUUID: "UUID-1",
+							CommandUUID: "W-UUID-1",
 							RequestType: "SecurityInfo",
 						},
 					},
 				},
 			},
-			false,
+			true,
 			[]responseTest{
 				{
 					testName: "resp1",
 					resp: &storage.StepCommandResult{
-						CommandUUID:  "UUID-1",
+						CommandUUID:  "W-UUID-1",
 						Completed:    true,
-						ResultReport: []byte("UUID-1"),
-					},
-					shouldBeCompleted: true,
-					shouldError:       false,
-					skipReqType:       true,
-					skipCmdLen:        true,
-					id:                "CCC222",
-				},
-				{
-					testName: "resp2",
-					resp: &storage.StepCommandResult{
-						CommandUUID:  "UUID-1",
-						Completed:    true,
-						ResultReport: []byte("UUID-1"),
+						RequestType:  "DeviceInformation",
+						ResultReport: []byte("W-UUID-1"),
 					},
 					shouldBeCompleted: false,
 					shouldError:       true,
 					skipReqType:       true,
+					skipCmdLen:        true,
+					reqType:           "DeviceInformation",
 					id:                "CCC222",
 				},
 			},
 		},
 	} {
 		t.Run("step-"+tStep.testName, func(t *testing.T) {
+			// if err := tStep.step.Validate(); err != nil {
+			// 	t.Fatalf("invalid test data: step enqueueing with config: %v", err)
+			// }
+
 			err := s.StoreStep(ctx, tStep.step, time.Now())
 			if tStep.shouldError && err == nil {
 				t.Fatalf("StoreStep: expected error; step=%v", tStep.step)
@@ -314,6 +283,10 @@ func mainTest(t *testing.T, s storage.AllStorage) {
 
 					if have, want := reqType, tRespStep.reqType; !tRespStep.skipReqType && have != want {
 						t.Errorf("request type does not match; have: %s, want: %s", have, want)
+					}
+
+					if err = tRespStep.resp.Validate(); err != nil {
+						t.Fatalf("invalid test data: step command result: %v", err)
 					}
 
 					completedStep, err := s.StoreCommandResponseAndRetrieveCompletedStep(ctx, tRespStep.id, tRespStep.resp)

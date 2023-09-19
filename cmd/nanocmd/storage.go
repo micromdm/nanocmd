@@ -6,6 +6,7 @@ import (
 	storageeng "github.com/micromdm/nanocmd/engine/storage"
 	storageengdiskv "github.com/micromdm/nanocmd/engine/storage/diskv"
 	storageenginmem "github.com/micromdm/nanocmd/engine/storage/inmem"
+	storageengmysql "github.com/micromdm/nanocmd/engine/storage/mysql"
 	storagecmdplan "github.com/micromdm/nanocmd/subsystem/cmdplan/storage"
 	storagecmdplandiskv "github.com/micromdm/nanocmd/subsystem/cmdplan/storage/diskv"
 	storagecmdplaninmem "github.com/micromdm/nanocmd/subsystem/cmdplan/storage/inmem"
@@ -62,6 +63,24 @@ func parseStorage(name, dsn string) (*storageConfig, error) {
 			inventory: inv,
 			profile:   storageprofdiskv.New(dsn),
 			cmdplan:   storagecmdplandiskv.New(dsn),
+			event:     eng,
+			filevault: fv,
+		}, nil
+	case "mysql":
+		inv := storageinvinmem.New()
+		fv, err := storagefvinmem.New(storagefvinvprk.NewInvPRK(inv))
+		if err != nil {
+			return nil, fmt.Errorf("creating filevault inmem storage: %w", err)
+		}
+		eng, err := storageengmysql.New(storageengmysql.WithDSN(dsn))
+		if err != nil {
+			return nil, err
+		}
+		return &storageConfig{
+			engine:    eng,
+			inventory: inv,
+			profile:   storageprofinmem.New(),
+			cmdplan:   storagecmdplaninmem.New(),
 			event:     eng,
 			filevault: fv,
 		}, nil
