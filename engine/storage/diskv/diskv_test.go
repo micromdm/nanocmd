@@ -1,7 +1,6 @@
 package diskv
 
 import (
-	"os"
 	"testing"
 
 	"github.com/micromdm/nanocmd/engine/storage"
@@ -9,6 +8,5 @@ import (
 )
 
 func TestDiskvStorage(t *testing.T) {
-	test.TestEngineStorage(t, func() storage.AllStorage { return New("teststor") })
-	os.RemoveAll("teststor")
+	test.TestEngineStorage(t, func() storage.AllStorage { return New(t.TempDir()) })
 }
