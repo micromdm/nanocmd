@@ -19,7 +19,7 @@ INSERT INTO id_commands
 VALUES
   (?, ?, ?, ?, ?);
 
--- name: DeleteIDCommand :exec
+-- name: DeleteIDCommandByWorkflow :exec
 DELETE
   c
 FROM
@@ -27,8 +27,24 @@ FROM
   INNER JOIN steps s
     ON c.step_id = s.id
 WHERE
-  enrollment_id = ? AND
+  c.enrollment_id = ? AND
   s.workflow_name = ?;
+
+-- name: DeleteIDCommands :exec
+DELETE FROM
+  id_commands
+WHERE
+  enrollment_id = ?;
+
+-- name: DeleteUnusedStepCommands :exec
+DELETE
+  sc
+FROM
+  step_commands sc
+  LEFT JOIN id_commands c
+    ON sc.command_uuid = c.command_uuid
+WHERE
+  c.command_uuid IS NULL;
 
 -- name: DeleteWorkflowStepHavingNoCommands :exec
 DELETE

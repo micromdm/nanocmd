@@ -126,7 +126,7 @@ func (q *Queries) CreateStepCommand(ctx context.Context, arg CreateStepCommandPa
 	return err
 }
 
-const deleteIDCommand = `-- name: DeleteIDCommand :exec
+const deleteIDCommandByWorkflow = `-- name: DeleteIDCommandByWorkflow :exec
 DELETE
   c
 FROM
@@ -134,17 +134,45 @@ FROM
   INNER JOIN steps s
     ON c.step_id = s.id
 WHERE
-  enrollment_id = ? AND
+  c.enrollment_id = ? AND
   s.workflow_name = ?
 `
 
-type DeleteIDCommandParams struct {
+type DeleteIDCommandByWorkflowParams struct {
 	EnrollmentID string
 	WorkflowName string
 }
 
-func (q *Queries) DeleteIDCommand(ctx context.Context, arg DeleteIDCommandParams) error {
-	_, err := q.db.ExecContext(ctx, deleteIDCommand, arg.EnrollmentID, arg.WorkflowName)
+func (q *Queries) DeleteIDCommandByWorkflow(ctx context.Context, arg DeleteIDCommandByWorkflowParams) error {
+	_, err := q.db.ExecContext(ctx, deleteIDCommandByWorkflow, arg.EnrollmentID, arg.WorkflowName)
+	return err
+}
+
+const deleteIDCommands = `-- name: DeleteIDCommands :exec
+DELETE FROM
+  id_commands
+WHERE
+  enrollment_id = ?
+`
+
+func (q *Queries) DeleteIDCommands(ctx context.Context, enrollmentID string) error {
+	_, err := q.db.ExecContext(ctx, deleteIDCommands, enrollmentID)
+	return err
+}
+
+const deleteUnusedStepCommands = `-- name: DeleteUnusedStepCommands :exec
+DELETE
+  sc
+FROM
+  step_commands sc
+  LEFT JOIN id_commands c
+    ON sc.command_uuid = c.command_uuid
+WHERE
+  c.command_uuid IS NULL
+`
+
+func (q *Queries) DeleteUnusedStepCommands(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, deleteUnusedStepCommands)
 	return err
 }
 

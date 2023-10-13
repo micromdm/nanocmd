@@ -204,19 +204,36 @@ func (s *MySQLStorage) RetrieveOutstandingWorkflowStatus(ctx context.Context, wo
 // CancelSteps cancels workflow steps for id.
 // See the storage interface type for further docs.
 func (s *MySQLStorage) CancelSteps(ctx context.Context, id, workflowName string) error {
-	// return ErrNotImplemented
-	// TODO: support having no workflowName
-	if id == "" || workflowName == "" {
+	if id == "" {
 		return errors.New("must supply both id and workflow name")
 	}
-	// TODO: use FOR UPDATE to avoid locking in transaction?
-	// TODO: remove command as well (when we add that table)
 	return tx(ctx, s.db, s.q, func(ctx context.Context, qtx *sqlc.Queries) error {
-		err := qtx.DeleteIDCommand(ctx, sqlc.DeleteIDCommandParams{EnrollmentID: id, WorkflowName: workflowName})
-		if err != nil {
-			return fmt.Errorf("delete id command: %w", err)
+		if workflowName != "" {
+			err := qtx.DeleteIDCommandByWorkflow(ctx, sqlc.DeleteIDCommandByWorkflowParams{
+				EnrollmentID: id,
+				WorkflowName: workflowName,
+			})
+			if err != nil {
+				return fmt.Errorf("delete id command by workflow (%s, %s): %w", id, workflowName, err)
+			}
+		} else {
+			err := qtx.DeleteIDCommands(ctx, id)
+			if err != nil {
+				return fmt.Errorf("delete id command (%s): %w", id, err)
+			}
 		}
-		// TODO: only delete step_id
-		return qtx.DeleteWorkflowStepHavingNoCommands(ctx, workflowName)
+
+		err := qtx.DeleteUnusedStepCommands(ctx)
+		if err != nil {
+			return fmt.Errorf("delete unused step commands: %w", err)
+		}
+
+		if workflowName != "" {
+			err = qtx.DeleteWorkflowStepHavingNoCommands(ctx, workflowName)
+			if err != nil {
+				return fmt.Errorf("delete workflow step having no commands (%s): %w", workflowName, err)
+			}
+		}
+		return nil
 	})
 }
