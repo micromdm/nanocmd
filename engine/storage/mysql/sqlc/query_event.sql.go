@@ -108,58 +108,6 @@ func (q *Queries) GetEventsByType(ctx context.Context, eventType string) ([]GetE
 	return items, nil
 }
 
-const getOutstandingIDs = `-- name: GetOutstandingIDs :many
-SELECT DISTINCT
-  c.enrollment_id
-FROM
-  id_commands c
-  JOIN steps s
-    ON s.id = c.step_id
-WHERE
-  c.enrollment_id IN (/*SLICE:ids*/?) AND
-  c.completed = 0 AND
-  s.workflow_name = ?
-`
-
-type GetOutstandingIDsParams struct {
-	Ids          []string
-	WorkflowName string
-}
-
-func (q *Queries) GetOutstandingIDs(ctx context.Context, arg GetOutstandingIDsParams) ([]string, error) {
-	query := getOutstandingIDs
-	var queryParams []interface{}
-	if len(arg.Ids) > 0 {
-		for _, v := range arg.Ids {
-			queryParams = append(queryParams, v)
-		}
-		query = strings.Replace(query, "/*SLICE:ids*/?", strings.Repeat(",?", len(arg.Ids))[1:], 1)
-	} else {
-		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
-	}
-	queryParams = append(queryParams, arg.WorkflowName)
-	rows, err := q.db.QueryContext(ctx, query, queryParams...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []string
-	for rows.Next() {
-		var enrollment_id string
-		if err := rows.Scan(&enrollment_id); err != nil {
-			return nil, err
-		}
-		items = append(items, enrollment_id)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const removeEvent = `-- name: RemoveEvent :exec
 DELETE FROM wf_events WHERE event_name = ?
 `

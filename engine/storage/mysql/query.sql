@@ -130,3 +130,16 @@ INSERT INTO step_commands
   (step_id, command_uuid, request_type, command)
 VALUES
   (?, ?, ?, ?);
+
+-- name: GetOutstandingIDs :many
+SELECT DISTINCT
+  c.enrollment_id
+FROM
+  id_commands c
+  JOIN steps s
+    ON s.id = c.step_id
+WHERE
+  c.enrollment_id IN (sqlc.slice('ids')) AND
+  c.completed = 0 AND
+  s.workflow_name = ?;
+
