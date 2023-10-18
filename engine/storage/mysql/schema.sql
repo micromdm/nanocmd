@@ -12,6 +12,11 @@ CREATE TABLE steps (
 
     process_id     CHAR(45) NULL,
 
+    INDEX (workflow_name),
+    INDEX (not_until),
+    INDEX (timeout),
+    INDEX (process_id),
+
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -30,6 +35,12 @@ CREATE TABLE id_commands (
 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    INDEX (enrollment_id),
+    INDEX (command_uuid),
+    INDEX (step_id),
+    INDEX (completed),
+    INDEX (last_push),
 
     FOREIGN KEY (step_id)
         REFERENCES steps (id),
@@ -62,6 +73,8 @@ CREATE TABLE wf_events (
 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    INDEX (event_type),
 
     PRIMARY KEY (event_name)
 );
