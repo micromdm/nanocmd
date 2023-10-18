@@ -42,7 +42,7 @@ func (s *MySQLStorage) RetrieveStepsToEnqueue(ctx context.Context, pushTime time
 			return fmt.Errorf("update step with not until proc (%s): %w", notUntilProcVal.String, err)
 		}
 
-		steps, err := qtx.GetStepsByNotUntilProc(ctx, notUntilProcVal)
+		steps, err := qtx.GetStepsByProcessID(ctx, notUntilProcVal)
 		if err != nil {
 			return fmt.Errorf("get step: %w", err)
 		}
@@ -58,7 +58,7 @@ func (s *MySQLStorage) RetrieveStepsToEnqueue(ctx context.Context, pushTime time
 			}
 		}
 
-		cmdIDs, err := qtx.GetIDCommandIDsByNotUntilProc(ctx, notUntilProcVal)
+		cmdIDs, err := qtx.GetIDCommandIDsByProcessID(ctx, notUntilProcVal)
 		if err != nil {
 			return fmt.Errorf("get command ids: %w", err)
 		}
@@ -72,7 +72,7 @@ func (s *MySQLStorage) RetrieveStepsToEnqueue(ctx context.Context, pushTime time
 			se.IDs = append(se.IDs, cmdID.EnrollmentID)
 		}
 
-		cmds, err := qtx.GetStepCommandsByNotUntilProc(ctx, notUntilProcVal)
+		cmds, err := qtx.GetStepCommandsByProcessID(ctx, notUntilProcVal)
 		if err != nil {
 			return fmt.Errorf("get step commands: %w", err)
 		}
@@ -94,12 +94,12 @@ func (s *MySQLStorage) RetrieveStepsToEnqueue(ctx context.Context, pushTime time
 			ret = append(ret, v)
 		}
 
-		err = qtx.RemoveStepCommandsByNotUntilProc(ctx, notUntilProcVal)
+		err = qtx.RemoveStepCommandsByProcessID(ctx, notUntilProcVal)
 		if err != nil {
 			return fmt.Errorf("remove step commands by not until proc (%s): %w", notUntilProcVal.String, err)
 		}
 
-		err = qtx.UpdateLastPushByNotUntilProc(ctx, notUntilProcVal)
+		err = qtx.UpdateLastPushByProcessID(ctx, notUntilProcVal)
 		if err != nil {
 			return fmt.Errorf("update last push by not until proc (%s): %w", notUntilProcVal.String, err)
 		}
@@ -129,7 +129,7 @@ func (s *MySQLStorage) RetrieveTimedOutSteps(ctx context.Context) ([]*storage.St
 			return fmt.Errorf("update step with not until proc (%s): %w", timeoutProcVal.String, err)
 		}
 
-		steps, err := qtx.GetStepsByTimeoutProc(ctx, timeoutProcVal)
+		steps, err := qtx.GetStepsWithContextByProcessID(ctx, timeoutProcVal)
 		if err != nil {
 			return fmt.Errorf("get step: %w", err)
 		}
@@ -144,7 +144,7 @@ func (s *MySQLStorage) RetrieveTimedOutSteps(ctx context.Context) ([]*storage.St
 			}
 		}
 
-		cmdIDs, err := qtx.GetIDCommandIDsByTimeoutProc(ctx, timeoutProcVal)
+		cmdIDs, err := qtx.GetIDCommandDetailsByProcessID(ctx, timeoutProcVal)
 		if err != nil {
 			return fmt.Errorf("get command ids: %w", err)
 		}
@@ -177,17 +177,17 @@ func (s *MySQLStorage) RetrieveTimedOutSteps(ctx context.Context) ([]*storage.St
 			ret = append(ret, v)
 		}
 
-		err = qtx.RemoveStepCommandsByTimeoutProc(ctx, timeoutProcVal)
+		err = qtx.RemoveStepCommandsByProcessID(ctx, timeoutProcVal)
 		if err != nil {
 			return fmt.Errorf("remove step commands by timeout proc (%s): %w", timeoutProcVal.String, err)
 		}
 
-		err = qtx.RemoveIDCommandsByTimeoutProc(ctx, timeoutProcVal)
+		err = qtx.RemoveIDCommandsByProcessID(ctx, timeoutProcVal)
 		if err != nil {
 			return fmt.Errorf("remove id commands by timeout proc (%s): %w", timeoutProcVal.String, err)
 		}
 
-		err = qtx.RemoveStepsByTimeoutProc(ctx, timeoutProcVal)
+		err = qtx.RemoveStepsByProcessID(ctx, timeoutProcVal)
 		if err != nil {
 			return fmt.Errorf("remove steps by timeout proc (%s): %w", timeoutProcVal.String, err)
 		}

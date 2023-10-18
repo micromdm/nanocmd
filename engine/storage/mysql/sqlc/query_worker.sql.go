@@ -10,47 +10,7 @@ import (
 	"database/sql"
 )
 
-const getIDCommandIDsByNotUntilProc = `-- name: GetIDCommandIDsByNotUntilProc :many
-SELECT
-  step_id,
-  enrollment_id
-FROM
-  id_commands c
-  JOIN steps s
-    ON c.step_id = s.id
-WHERE
-  s.process_id = ?
-`
-
-type GetIDCommandIDsByNotUntilProcRow struct {
-	StepID       int64
-	EnrollmentID string
-}
-
-func (q *Queries) GetIDCommandIDsByNotUntilProc(ctx context.Context, processID sql.NullString) ([]GetIDCommandIDsByNotUntilProcRow, error) {
-	rows, err := q.db.QueryContext(ctx, getIDCommandIDsByNotUntilProc, processID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []GetIDCommandIDsByNotUntilProcRow
-	for rows.Next() {
-		var i GetIDCommandIDsByNotUntilProcRow
-		if err := rows.Scan(&i.StepID, &i.EnrollmentID); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getIDCommandIDsByTimeoutProc = `-- name: GetIDCommandIDsByTimeoutProc :many
+const getIDCommandDetailsByProcessID = `-- name: GetIDCommandDetailsByProcessID :many
 SELECT
   step_id,
   enrollment_id,
@@ -68,7 +28,7 @@ ORDER BY
   step_id, enrollment_id
 `
 
-type GetIDCommandIDsByTimeoutProcRow struct {
+type GetIDCommandDetailsByProcessIDRow struct {
 	StepID       int64
 	EnrollmentID string
 	CommandUuid  string
@@ -77,15 +37,15 @@ type GetIDCommandIDsByTimeoutProcRow struct {
 	Result       []byte
 }
 
-func (q *Queries) GetIDCommandIDsByTimeoutProc(ctx context.Context, processID sql.NullString) ([]GetIDCommandIDsByTimeoutProcRow, error) {
-	rows, err := q.db.QueryContext(ctx, getIDCommandIDsByTimeoutProc, processID)
+func (q *Queries) GetIDCommandDetailsByProcessID(ctx context.Context, processID sql.NullString) ([]GetIDCommandDetailsByProcessIDRow, error) {
+	rows, err := q.db.QueryContext(ctx, getIDCommandDetailsByProcessID, processID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetIDCommandIDsByTimeoutProcRow
+	var items []GetIDCommandDetailsByProcessIDRow
 	for rows.Next() {
-		var i GetIDCommandIDsByTimeoutProcRow
+		var i GetIDCommandDetailsByProcessIDRow
 		if err := rows.Scan(
 			&i.StepID,
 			&i.EnrollmentID,
@@ -94,6 +54,46 @@ func (q *Queries) GetIDCommandIDsByTimeoutProc(ctx context.Context, processID sq
 			&i.Completed,
 			&i.Result,
 		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getIDCommandIDsByProcessID = `-- name: GetIDCommandIDsByProcessID :many
+SELECT
+  step_id,
+  enrollment_id
+FROM
+  id_commands c
+  JOIN steps s
+    ON c.step_id = s.id
+WHERE
+  s.process_id = ?
+`
+
+type GetIDCommandIDsByProcessIDRow struct {
+	StepID       int64
+	EnrollmentID string
+}
+
+func (q *Queries) GetIDCommandIDsByProcessID(ctx context.Context, processID sql.NullString) ([]GetIDCommandIDsByProcessIDRow, error) {
+	rows, err := q.db.QueryContext(ctx, getIDCommandIDsByProcessID, processID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetIDCommandIDsByProcessIDRow
+	for rows.Next() {
+		var i GetIDCommandIDsByProcessIDRow
+		if err := rows.Scan(&i.StepID, &i.EnrollmentID); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -140,7 +140,7 @@ func (q *Queries) GetRePushIDs(ctx context.Context, before sql.NullTime) ([]stri
 	return items, nil
 }
 
-const getStepCommandsByNotUntilProc = `-- name: GetStepCommandsByNotUntilProc :many
+const getStepCommandsByProcessID = `-- name: GetStepCommandsByProcessID :many
 SELECT
   sc.step_id,
   sc.command_uuid,
@@ -154,22 +154,22 @@ WHERE
   s.process_id = ?
 `
 
-type GetStepCommandsByNotUntilProcRow struct {
+type GetStepCommandsByProcessIDRow struct {
 	StepID      int64
 	CommandUuid string
 	RequestType string
 	Command     []byte
 }
 
-func (q *Queries) GetStepCommandsByNotUntilProc(ctx context.Context, processID sql.NullString) ([]GetStepCommandsByNotUntilProcRow, error) {
-	rows, err := q.db.QueryContext(ctx, getStepCommandsByNotUntilProc, processID)
+func (q *Queries) GetStepCommandsByProcessID(ctx context.Context, processID sql.NullString) ([]GetStepCommandsByProcessIDRow, error) {
+	rows, err := q.db.QueryContext(ctx, getStepCommandsByProcessID, processID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetStepCommandsByNotUntilProcRow
+	var items []GetStepCommandsByProcessIDRow
 	for rows.Next() {
-		var i GetStepCommandsByNotUntilProcRow
+		var i GetStepCommandsByProcessIDRow
 		if err := rows.Scan(
 			&i.StepID,
 			&i.CommandUuid,
@@ -189,7 +189,7 @@ func (q *Queries) GetStepCommandsByNotUntilProc(ctx context.Context, processID s
 	return items, nil
 }
 
-const getStepsByNotUntilProc = `-- name: GetStepsByNotUntilProc :many
+const getStepsByProcessID = `-- name: GetStepsByProcessID :many
 SELECT
   id,
   workflow_name,
@@ -201,22 +201,22 @@ WHERE
   process_id = ?
 `
 
-type GetStepsByNotUntilProcRow struct {
+type GetStepsByProcessIDRow struct {
 	ID           int64
 	WorkflowName string
 	InstanceID   string
 	StepName     sql.NullString
 }
 
-func (q *Queries) GetStepsByNotUntilProc(ctx context.Context, processID sql.NullString) ([]GetStepsByNotUntilProcRow, error) {
-	rows, err := q.db.QueryContext(ctx, getStepsByNotUntilProc, processID)
+func (q *Queries) GetStepsByProcessID(ctx context.Context, processID sql.NullString) ([]GetStepsByProcessIDRow, error) {
+	rows, err := q.db.QueryContext(ctx, getStepsByProcessID, processID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetStepsByNotUntilProcRow
+	var items []GetStepsByProcessIDRow
 	for rows.Next() {
-		var i GetStepsByNotUntilProcRow
+		var i GetStepsByProcessIDRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.WorkflowName,
@@ -236,7 +236,7 @@ func (q *Queries) GetStepsByNotUntilProc(ctx context.Context, processID sql.Null
 	return items, nil
 }
 
-const getStepsByTimeoutProc = `-- name: GetStepsByTimeoutProc :many
+const getStepsWithContextByProcessID = `-- name: GetStepsWithContextByProcessID :many
 SELECT
   id,
   workflow_name,
@@ -249,7 +249,7 @@ WHERE
   process_id = ?
 `
 
-type GetStepsByTimeoutProcRow struct {
+type GetStepsWithContextByProcessIDRow struct {
 	ID           int64
 	WorkflowName string
 	InstanceID   string
@@ -257,15 +257,15 @@ type GetStepsByTimeoutProcRow struct {
 	Context      []byte
 }
 
-func (q *Queries) GetStepsByTimeoutProc(ctx context.Context, processID sql.NullString) ([]GetStepsByTimeoutProcRow, error) {
-	rows, err := q.db.QueryContext(ctx, getStepsByTimeoutProc, processID)
+func (q *Queries) GetStepsWithContextByProcessID(ctx context.Context, processID sql.NullString) ([]GetStepsWithContextByProcessIDRow, error) {
+	rows, err := q.db.QueryContext(ctx, getStepsWithContextByProcessID, processID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetStepsByTimeoutProcRow
+	var items []GetStepsWithContextByProcessIDRow
 	for rows.Next() {
-		var i GetStepsByTimeoutProcRow
+		var i GetStepsWithContextByProcessIDRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.WorkflowName,
@@ -286,7 +286,7 @@ func (q *Queries) GetStepsByTimeoutProc(ctx context.Context, processID sql.NullS
 	return items, nil
 }
 
-const removeIDCommandsByTimeoutProc = `-- name: RemoveIDCommandsByTimeoutProc :exec
+const removeIDCommandsByProcessID = `-- name: RemoveIDCommandsByProcessID :exec
 DELETE sc FROM
   id_commands sc
   JOIN steps s
@@ -295,12 +295,12 @@ WHERE
   s.process_id = ?
 `
 
-func (q *Queries) RemoveIDCommandsByTimeoutProc(ctx context.Context, processID sql.NullString) error {
-	_, err := q.db.ExecContext(ctx, removeIDCommandsByTimeoutProc, processID)
+func (q *Queries) RemoveIDCommandsByProcessID(ctx context.Context, processID sql.NullString) error {
+	_, err := q.db.ExecContext(ctx, removeIDCommandsByProcessID, processID)
 	return err
 }
 
-const removeStepCommandsByNotUntilProc = `-- name: RemoveStepCommandsByNotUntilProc :exec
+const removeStepCommandsByProcessID = `-- name: RemoveStepCommandsByProcessID :exec
 DELETE sc FROM
   step_commands sc
   JOIN steps s
@@ -309,38 +309,24 @@ WHERE
   s.process_id = ?
 `
 
-func (q *Queries) RemoveStepCommandsByNotUntilProc(ctx context.Context, processID sql.NullString) error {
-	_, err := q.db.ExecContext(ctx, removeStepCommandsByNotUntilProc, processID)
+func (q *Queries) RemoveStepCommandsByProcessID(ctx context.Context, processID sql.NullString) error {
+	_, err := q.db.ExecContext(ctx, removeStepCommandsByProcessID, processID)
 	return err
 }
 
-const removeStepCommandsByTimeoutProc = `-- name: RemoveStepCommandsByTimeoutProc :exec
-DELETE sc FROM
-  step_commands sc
-  JOIN steps s
-    ON sc.step_id = s.id
-WHERE
-  s.process_id = ?
-`
-
-func (q *Queries) RemoveStepCommandsByTimeoutProc(ctx context.Context, processID sql.NullString) error {
-	_, err := q.db.ExecContext(ctx, removeStepCommandsByTimeoutProc, processID)
-	return err
-}
-
-const removeStepsByTimeoutProc = `-- name: RemoveStepsByTimeoutProc :exec
+const removeStepsByProcessID = `-- name: RemoveStepsByProcessID :exec
 DELETE FROM
   steps
 WHERE
   process_id = ?
 `
 
-func (q *Queries) RemoveStepsByTimeoutProc(ctx context.Context, processID sql.NullString) error {
-	_, err := q.db.ExecContext(ctx, removeStepsByTimeoutProc, processID)
+func (q *Queries) RemoveStepsByProcessID(ctx context.Context, processID sql.NullString) error {
+	_, err := q.db.ExecContext(ctx, removeStepsByProcessID, processID)
 	return err
 }
 
-const updateLastPushByNotUntilProc = `-- name: UpdateLastPushByNotUntilProc :exec
+const updateLastPushByProcessID = `-- name: UpdateLastPushByProcessID :exec
 UPDATE
   id_commands c
   JOIN steps s
@@ -351,8 +337,8 @@ WHERE
   s.process_id = ?
 `
 
-func (q *Queries) UpdateLastPushByNotUntilProc(ctx context.Context, processID sql.NullString) error {
-	_, err := q.db.ExecContext(ctx, updateLastPushByNotUntilProc, processID)
+func (q *Queries) UpdateLastPushByProcessID(ctx context.Context, processID sql.NullString) error {
+	_, err := q.db.ExecContext(ctx, updateLastPushByProcessID, processID)
 	return err
 }
 

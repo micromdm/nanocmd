@@ -7,7 +7,7 @@ WHERE
   process_id IS NULL AND
   not_until < ?;
 
--- name: GetStepsByNotUntilProc :many
+-- name: GetStepsByProcessID :many
 SELECT
   id,
   workflow_name,
@@ -18,7 +18,7 @@ FROM
 WHERE
   process_id = ?;
 
--- name: GetStepCommandsByNotUntilProc :many
+-- name: GetStepCommandsByProcessID :many
 SELECT
   sc.step_id,
   sc.command_uuid,
@@ -31,7 +31,7 @@ FROM
 WHERE
   s.process_id = ?;
 
--- name: GetIDCommandIDsByNotUntilProc :many
+-- name: GetIDCommandIDsByProcessID :many
 SELECT
   step_id,
   enrollment_id
@@ -42,7 +42,7 @@ FROM
 WHERE
   s.process_id = ?;
 
--- name: RemoveStepCommandsByNotUntilProc :exec
+-- name: RemoveStepCommandsByProcessID :exec
 DELETE sc FROM
   step_commands sc
   JOIN steps s
@@ -50,7 +50,7 @@ DELETE sc FROM
 WHERE
   s.process_id = ?;
 
--- name: UpdateLastPushByNotUntilProc :exec
+-- name: UpdateLastPushByProcessID :exec
 UPDATE
   id_commands c
   JOIN steps s
@@ -69,7 +69,7 @@ WHERE
   process_id IS NULL AND
   timeout <= ?;
 
--- name: GetStepsByTimeoutProc :many
+-- name: GetStepsWithContextByProcessID :many
 SELECT
   id,
   workflow_name,
@@ -81,7 +81,7 @@ FROM
 WHERE
   process_id = ?;
 
--- name: GetIDCommandIDsByTimeoutProc :many
+-- name: GetIDCommandDetailsByProcessID :many
 SELECT
   step_id,
   enrollment_id,
@@ -98,15 +98,7 @@ WHERE
 ORDER BY
   step_id, enrollment_id;
 
--- name: RemoveStepCommandsByTimeoutProc :exec
-DELETE sc FROM
-  step_commands sc
-  JOIN steps s
-    ON sc.step_id = s.id
-WHERE
-  s.process_id = ?;
-
--- name: RemoveIDCommandsByTimeoutProc :exec
+-- name: RemoveIDCommandsByProcessID :exec
 DELETE sc FROM
   id_commands sc
   JOIN steps s
@@ -114,7 +106,7 @@ DELETE sc FROM
 WHERE
   s.process_id = ?;
 
--- name: RemoveStepsByTimeoutProc :exec
+-- name: RemoveStepsByProcessID :exec
 DELETE FROM
   steps
 WHERE
