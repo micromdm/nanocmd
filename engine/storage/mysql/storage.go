@@ -78,7 +78,7 @@ func (s *MySQLStorage) StoreCommandResponseAndRetrieveCompletedStep(ctx context.
 
 	var ret *storage.StepResult
 
-	err = tx(ctx, s.db, s.q, func(ctx context.Context, qtx *sqlc.Queries) error {
+	err = tx(ctx, s.db, s.q, func(ctx context.Context, _ *sql.Tx, qtx *sqlc.Queries) error {
 		sd, err := qtx.GetStepByID(ctx, cmdCt.StepID)
 		if err != nil {
 			return fmt.Errorf("get step by id (%d): %w", cmdCt.StepID, err)
@@ -143,7 +143,7 @@ func (s *MySQLStorage) StoreStep(ctx context.Context, step *storage.StepEnqueuin
 	if err != nil {
 		return fmt.Errorf("validating step: %w", err)
 	}
-	return tx(ctx, s.db, s.q, func(ctx context.Context, qtx *sqlc.Queries) error {
+	return tx(ctx, s.db, s.q, func(ctx context.Context, _ *sql.Tx, qtx *sqlc.Queries) error {
 		params := sqlc.CreateStepParams{
 			WorkflowName: step.WorkflowName,
 			InstanceID:   step.InstanceID,
@@ -207,7 +207,7 @@ func (s *MySQLStorage) CancelSteps(ctx context.Context, id, workflowName string)
 	if id == "" {
 		return errors.New("must supply both id and workflow name")
 	}
-	return tx(ctx, s.db, s.q, func(ctx context.Context, qtx *sqlc.Queries) error {
+	return tx(ctx, s.db, s.q, func(ctx context.Context, _ *sql.Tx, qtx *sqlc.Queries) error {
 		if workflowName != "" {
 			err := qtx.DeleteIDCommandByWorkflow(ctx, sqlc.DeleteIDCommandByWorkflowParams{
 				EnrollmentID: id,

@@ -29,7 +29,7 @@ func (s *MySQLStorage) RetrieveStepsToEnqueue(ctx context.Context, pushTime time
 	}
 
 	var ret []*storage.StepEnqueueing
-	err := tx(ctx, s.db, s.q, func(ctx context.Context, qtx *sqlc.Queries) error {
+	err := tx(ctx, s.db, s.q, func(ctx context.Context, _ *sql.Tx, qtx *sqlc.Queries) error {
 
 		// this smells like a bad SQL paradigm
 		notUntilProcVal := s.randHexString("notu")
@@ -116,7 +116,7 @@ func (s *MySQLStorage) RetrieveTimedOutSteps(ctx context.Context) ([]*storage.St
 
 	now := time.Now()
 
-	err := tx(ctx, s.db, s.q, func(ctx context.Context, qtx *sqlc.Queries) error {
+	err := tx(ctx, s.db, s.q, func(ctx context.Context, _ *sql.Tx, qtx *sqlc.Queries) error {
 
 		// this smells like a bad SQL paradigm
 		timeoutProcVal := s.randHexString("tout")
@@ -203,7 +203,7 @@ func (s *MySQLStorage) RetrieveTimedOutSteps(ctx context.Context) ([]*storage.St
 func (s *MySQLStorage) RetrieveAndMarkRePushed(ctx context.Context, ifBefore time.Time, pushTime time.Time) ([]string, error) {
 	var ids []string
 	ifBeforeTime := sqlNullTime(ifBefore)
-	err := tx(ctx, s.db, s.q, func(ctx context.Context, qtx *sqlc.Queries) error {
+	err := tx(ctx, s.db, s.q, func(ctx context.Context, _ *sql.Tx, qtx *sqlc.Queries) error {
 		var err error
 		ids, err = qtx.GetRePushIDs(ctx, ifBeforeTime)
 		if err != nil {

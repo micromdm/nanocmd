@@ -75,18 +75,18 @@ func New(opts ...Option) (*MySQLStorage, error) {
 	}, nil
 }
 
-// sqlNullString sets Valid to true of the return value if s is not empty.
+// sqlNullString sets Valid to true of the return value of s is not empty.
 func sqlNullString(s string) sql.NullString {
 	return sql.NullString{String: s, Valid: s != ""}
 }
 
-// sqlNullTime sets Valid to true of the return value if t is not zero.
+// sqlNullTime sets Valid to true of the return value of t is not zero.
 func sqlNullTime(t time.Time) sql.NullTime {
 	return sql.NullTime{Valid: !t.IsZero(), Time: t}
 }
 
 // txcb executes SQL within transactions when wrapped in tx().
-type txcb func(ctx context.Context, qtx *sqlc.Queries) error
+type txcb func(ctx context.Context, tx *sql.Tx, qtx *sqlc.Queries) error
 
 // tx wraps g in transactions using db.
 // If g returns an err the transaction will be rolled back; otherwise committed.
@@ -95,7 +95,7 @@ func tx(ctx context.Context, db *sql.DB, q *sqlc.Queries, g txcb) error {
 	if err != nil {
 		return fmt.Errorf("tx begin: %w", err)
 	}
-	if err = g(ctx, q.WithTx(tx)); err != nil {
+	if err = g(ctx, tx, q.WithTx(tx)); err != nil {
 		if rbErr := tx.Rollback(); rbErr != nil {
 			return fmt.Errorf("tx rollback: %w; while trying to handle error: %v", rbErr, err)
 		}
