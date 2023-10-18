@@ -8,10 +8,9 @@ CREATE TABLE steps (
     context MEDIUMTEXT NULL,
 
     not_until      TIMESTAMP NULL,
-    not_until_proc CHAR(40)  NULL,
-
     timeout        TIMESTAMP NULL,
-    timeout_proc   CHAR(40)  NULL, -- merge with not_until_proc, maybe pre/post-fix content
+
+    process_id     CHAR(45) NULL,
 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP

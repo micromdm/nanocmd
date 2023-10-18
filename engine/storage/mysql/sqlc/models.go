@@ -27,9 +27,8 @@ type Step struct {
 	StepName     sql.NullString
 	Context      []byte
 	NotUntil     sql.NullTime
-	NotUntilProc sql.NullString
 	Timeout      sql.NullTime
-	TimeoutProc  sql.NullString
+	ProcessID    sql.NullString
 	CreatedAt    sql.NullTime
 	UpdatedAt    sql.NullTime
 }

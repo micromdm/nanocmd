@@ -2,9 +2,9 @@
 UPDATE
   steps
 SET
-  not_until_proc = ?
+  process_id = ?
 WHERE
-  not_until_proc IS NULL AND
+  process_id IS NULL AND
   not_until < ?;
 
 -- name: GetStepsByNotUntilProc :many
@@ -16,7 +16,7 @@ SELECT
 FROM
   steps
 WHERE
-  not_until_proc = ?;
+  process_id = ?;
 
 -- name: GetStepCommandsByNotUntilProc :many
 SELECT
@@ -29,7 +29,7 @@ FROM
   JOIN steps s
     ON sc.step_id = s.id
 WHERE
-  s.not_until_proc = ?;
+  s.process_id = ?;
 
 -- name: GetIDCommandIDsByNotUntilProc :many
 SELECT
@@ -40,7 +40,7 @@ FROM
   JOIN steps s
     ON c.step_id = s.id
 WHERE
-  s.not_until_proc = ?;
+  s.process_id = ?;
 
 -- name: RemoveStepCommandsByNotUntilProc :exec
 DELETE sc FROM
@@ -48,7 +48,7 @@ DELETE sc FROM
   JOIN steps s
     ON sc.step_id = s.id
 WHERE
-  s.not_until_proc = ?;
+  s.process_id = ?;
 
 -- name: UpdateLastPushByNotUntilProc :exec
 UPDATE
@@ -58,15 +58,15 @@ UPDATE
 SET
   c.last_push = CURRENT_TIMESTAMP
 WHERE
-  s.not_until_proc = ?;
+  s.process_id = ?;
 
 -- name: UpdateStepAfterTimeout :exec
 UPDATE
   steps
 SET
-  timeout_proc = ?
+  process_id = ?
 WHERE
-  timeout_proc IS NULL AND
+  process_id IS NULL AND
   timeout <= ?;
 
 -- name: GetStepsByTimeoutProc :many
@@ -79,7 +79,7 @@ SELECT
 FROM
   steps
 WHERE
-  timeout_proc = ?;
+  process_id = ?;
 
 -- name: GetIDCommandIDsByTimeoutProc :many
 SELECT
@@ -94,7 +94,7 @@ FROM
   JOIN steps s
     ON c.step_id = s.id
 WHERE
-  s.timeout_proc = ?
+  s.process_id = ?
 ORDER BY
   step_id, enrollment_id;
 
@@ -104,7 +104,7 @@ DELETE sc FROM
   JOIN steps s
     ON sc.step_id = s.id
 WHERE
-  s.timeout_proc = ?;
+  s.process_id = ?;
 
 -- name: RemoveIDCommandsByTimeoutProc :exec
 DELETE sc FROM
@@ -112,13 +112,13 @@ DELETE sc FROM
   JOIN steps s
     ON sc.step_id = s.id
 WHERE
-  s.timeout_proc = ?;
+  s.process_id = ?;
 
 -- name: RemoveStepsByTimeoutProc :exec
 DELETE FROM
   steps
 WHERE
-  timeout_proc = ?;
+  process_id = ?;
 
 -- name: GetRePushIDs :many
 SELECT DISTINCT

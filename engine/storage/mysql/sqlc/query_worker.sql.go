@@ -19,7 +19,7 @@ FROM
   JOIN steps s
     ON c.step_id = s.id
 WHERE
-  s.not_until_proc = ?
+  s.process_id = ?
 `
 
 type GetIDCommandIDsByNotUntilProcRow struct {
@@ -27,8 +27,8 @@ type GetIDCommandIDsByNotUntilProcRow struct {
 	EnrollmentID string
 }
 
-func (q *Queries) GetIDCommandIDsByNotUntilProc(ctx context.Context, notUntilProc sql.NullString) ([]GetIDCommandIDsByNotUntilProcRow, error) {
-	rows, err := q.db.QueryContext(ctx, getIDCommandIDsByNotUntilProc, notUntilProc)
+func (q *Queries) GetIDCommandIDsByNotUntilProc(ctx context.Context, processID sql.NullString) ([]GetIDCommandIDsByNotUntilProcRow, error) {
+	rows, err := q.db.QueryContext(ctx, getIDCommandIDsByNotUntilProc, processID)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +63,7 @@ FROM
   JOIN steps s
     ON c.step_id = s.id
 WHERE
-  s.timeout_proc = ?
+  s.process_id = ?
 ORDER BY
   step_id, enrollment_id
 `
@@ -77,8 +77,8 @@ type GetIDCommandIDsByTimeoutProcRow struct {
 	Result       []byte
 }
 
-func (q *Queries) GetIDCommandIDsByTimeoutProc(ctx context.Context, timeoutProc sql.NullString) ([]GetIDCommandIDsByTimeoutProcRow, error) {
-	rows, err := q.db.QueryContext(ctx, getIDCommandIDsByTimeoutProc, timeoutProc)
+func (q *Queries) GetIDCommandIDsByTimeoutProc(ctx context.Context, processID sql.NullString) ([]GetIDCommandIDsByTimeoutProcRow, error) {
+	rows, err := q.db.QueryContext(ctx, getIDCommandIDsByTimeoutProc, processID)
 	if err != nil {
 		return nil, err
 	}
@@ -151,7 +151,7 @@ FROM
   JOIN steps s
     ON sc.step_id = s.id
 WHERE
-  s.not_until_proc = ?
+  s.process_id = ?
 `
 
 type GetStepCommandsByNotUntilProcRow struct {
@@ -161,8 +161,8 @@ type GetStepCommandsByNotUntilProcRow struct {
 	Command     []byte
 }
 
-func (q *Queries) GetStepCommandsByNotUntilProc(ctx context.Context, notUntilProc sql.NullString) ([]GetStepCommandsByNotUntilProcRow, error) {
-	rows, err := q.db.QueryContext(ctx, getStepCommandsByNotUntilProc, notUntilProc)
+func (q *Queries) GetStepCommandsByNotUntilProc(ctx context.Context, processID sql.NullString) ([]GetStepCommandsByNotUntilProcRow, error) {
+	rows, err := q.db.QueryContext(ctx, getStepCommandsByNotUntilProc, processID)
 	if err != nil {
 		return nil, err
 	}
@@ -198,7 +198,7 @@ SELECT
 FROM
   steps
 WHERE
-  not_until_proc = ?
+  process_id = ?
 `
 
 type GetStepsByNotUntilProcRow struct {
@@ -208,8 +208,8 @@ type GetStepsByNotUntilProcRow struct {
 	StepName     sql.NullString
 }
 
-func (q *Queries) GetStepsByNotUntilProc(ctx context.Context, notUntilProc sql.NullString) ([]GetStepsByNotUntilProcRow, error) {
-	rows, err := q.db.QueryContext(ctx, getStepsByNotUntilProc, notUntilProc)
+func (q *Queries) GetStepsByNotUntilProc(ctx context.Context, processID sql.NullString) ([]GetStepsByNotUntilProcRow, error) {
+	rows, err := q.db.QueryContext(ctx, getStepsByNotUntilProc, processID)
 	if err != nil {
 		return nil, err
 	}
@@ -246,7 +246,7 @@ SELECT
 FROM
   steps
 WHERE
-  timeout_proc = ?
+  process_id = ?
 `
 
 type GetStepsByTimeoutProcRow struct {
@@ -257,8 +257,8 @@ type GetStepsByTimeoutProcRow struct {
 	Context      []byte
 }
 
-func (q *Queries) GetStepsByTimeoutProc(ctx context.Context, timeoutProc sql.NullString) ([]GetStepsByTimeoutProcRow, error) {
-	rows, err := q.db.QueryContext(ctx, getStepsByTimeoutProc, timeoutProc)
+func (q *Queries) GetStepsByTimeoutProc(ctx context.Context, processID sql.NullString) ([]GetStepsByTimeoutProcRow, error) {
+	rows, err := q.db.QueryContext(ctx, getStepsByTimeoutProc, processID)
 	if err != nil {
 		return nil, err
 	}
@@ -292,11 +292,11 @@ DELETE sc FROM
   JOIN steps s
     ON sc.step_id = s.id
 WHERE
-  s.timeout_proc = ?
+  s.process_id = ?
 `
 
-func (q *Queries) RemoveIDCommandsByTimeoutProc(ctx context.Context, timeoutProc sql.NullString) error {
-	_, err := q.db.ExecContext(ctx, removeIDCommandsByTimeoutProc, timeoutProc)
+func (q *Queries) RemoveIDCommandsByTimeoutProc(ctx context.Context, processID sql.NullString) error {
+	_, err := q.db.ExecContext(ctx, removeIDCommandsByTimeoutProc, processID)
 	return err
 }
 
@@ -306,11 +306,11 @@ DELETE sc FROM
   JOIN steps s
     ON sc.step_id = s.id
 WHERE
-  s.not_until_proc = ?
+  s.process_id = ?
 `
 
-func (q *Queries) RemoveStepCommandsByNotUntilProc(ctx context.Context, notUntilProc sql.NullString) error {
-	_, err := q.db.ExecContext(ctx, removeStepCommandsByNotUntilProc, notUntilProc)
+func (q *Queries) RemoveStepCommandsByNotUntilProc(ctx context.Context, processID sql.NullString) error {
+	_, err := q.db.ExecContext(ctx, removeStepCommandsByNotUntilProc, processID)
 	return err
 }
 
@@ -320,11 +320,11 @@ DELETE sc FROM
   JOIN steps s
     ON sc.step_id = s.id
 WHERE
-  s.timeout_proc = ?
+  s.process_id = ?
 `
 
-func (q *Queries) RemoveStepCommandsByTimeoutProc(ctx context.Context, timeoutProc sql.NullString) error {
-	_, err := q.db.ExecContext(ctx, removeStepCommandsByTimeoutProc, timeoutProc)
+func (q *Queries) RemoveStepCommandsByTimeoutProc(ctx context.Context, processID sql.NullString) error {
+	_, err := q.db.ExecContext(ctx, removeStepCommandsByTimeoutProc, processID)
 	return err
 }
 
@@ -332,11 +332,11 @@ const removeStepsByTimeoutProc = `-- name: RemoveStepsByTimeoutProc :exec
 DELETE FROM
   steps
 WHERE
-  timeout_proc = ?
+  process_id = ?
 `
 
-func (q *Queries) RemoveStepsByTimeoutProc(ctx context.Context, timeoutProc sql.NullString) error {
-	_, err := q.db.ExecContext(ctx, removeStepsByTimeoutProc, timeoutProc)
+func (q *Queries) RemoveStepsByTimeoutProc(ctx context.Context, processID sql.NullString) error {
+	_, err := q.db.ExecContext(ctx, removeStepsByTimeoutProc, processID)
 	return err
 }
 
@@ -348,11 +348,11 @@ UPDATE
 SET
   c.last_push = CURRENT_TIMESTAMP
 WHERE
-  s.not_until_proc = ?
+  s.process_id = ?
 `
 
-func (q *Queries) UpdateLastPushByNotUntilProc(ctx context.Context, notUntilProc sql.NullString) error {
-	_, err := q.db.ExecContext(ctx, updateLastPushByNotUntilProc, notUntilProc)
+func (q *Queries) UpdateLastPushByNotUntilProc(ctx context.Context, processID sql.NullString) error {
+	_, err := q.db.ExecContext(ctx, updateLastPushByNotUntilProc, processID)
 	return err
 }
 
@@ -380,19 +380,19 @@ const updateStepAfterNotUntil = `-- name: UpdateStepAfterNotUntil :exec
 UPDATE
   steps
 SET
-  not_until_proc = ?
+  process_id = ?
 WHERE
-  not_until_proc IS NULL AND
+  process_id IS NULL AND
   not_until < ?
 `
 
 type UpdateStepAfterNotUntilParams struct {
-	NotUntilProc sql.NullString
-	NotUntil     sql.NullTime
+	ProcessID sql.NullString
+	NotUntil  sql.NullTime
 }
 
 func (q *Queries) UpdateStepAfterNotUntil(ctx context.Context, arg UpdateStepAfterNotUntilParams) error {
-	_, err := q.db.ExecContext(ctx, updateStepAfterNotUntil, arg.NotUntilProc, arg.NotUntil)
+	_, err := q.db.ExecContext(ctx, updateStepAfterNotUntil, arg.ProcessID, arg.NotUntil)
 	return err
 }
 
@@ -400,18 +400,18 @@ const updateStepAfterTimeout = `-- name: UpdateStepAfterTimeout :exec
 UPDATE
   steps
 SET
-  timeout_proc = ?
+  process_id = ?
 WHERE
-  timeout_proc IS NULL AND
+  process_id IS NULL AND
   timeout <= ?
 `
 
 type UpdateStepAfterTimeoutParams struct {
-	TimeoutProc sql.NullString
-	Timeout     sql.NullTime
+	ProcessID sql.NullString
+	Timeout   sql.NullTime
 }
 
 func (q *Queries) UpdateStepAfterTimeout(ctx context.Context, arg UpdateStepAfterTimeoutParams) error {
-	_, err := q.db.ExecContext(ctx, updateStepAfterTimeout, arg.TimeoutProc, arg.Timeout)
+	_, err := q.db.ExecContext(ctx, updateStepAfterTimeout, arg.ProcessID, arg.Timeout)
 	return err
 }

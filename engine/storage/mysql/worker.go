@@ -13,12 +13,12 @@ import (
 )
 
 // randHexString generates 40-character string of hex-encoded random data.
-func (s *MySQLStorage) randHexString() sql.NullString {
+func (s *MySQLStorage) randHexString(prefix string) sql.NullString {
 	p := make([]byte, 20)
 	s.randMu.Lock()
 	defer s.randMu.Unlock()
 	s.rand.Read(p)
-	return sql.NullString{String: hex.EncodeToString(p), Valid: true}
+	return sql.NullString{String: prefix + "." + hex.EncodeToString(p), Valid: true}
 }
 
 // RetrieveStepsToEnqueue fetches steps to be enqueued that were enqueued "later" with NotUntil.
@@ -32,11 +32,11 @@ func (s *MySQLStorage) RetrieveStepsToEnqueue(ctx context.Context, pushTime time
 	err := tx(ctx, s.db, s.q, func(ctx context.Context, qtx *sqlc.Queries) error {
 
 		// this smells like a bad SQL paradigm
-		notUntilProcVal := s.randHexString()
+		notUntilProcVal := s.randHexString("notu")
 
 		err := qtx.UpdateStepAfterNotUntil(ctx, sqlc.UpdateStepAfterNotUntilParams{
-			NotUntilProc: notUntilProcVal,
-			NotUntil:     sql.NullTime{Valid: true, Time: pushTime},
+			ProcessID: notUntilProcVal,
+			NotUntil:  sql.NullTime{Valid: true, Time: pushTime},
 		})
 		if err != nil {
 			return fmt.Errorf("update step with not until proc (%s): %w", notUntilProcVal.String, err)
@@ -119,11 +119,11 @@ func (s *MySQLStorage) RetrieveTimedOutSteps(ctx context.Context) ([]*storage.St
 	err := tx(ctx, s.db, s.q, func(ctx context.Context, qtx *sqlc.Queries) error {
 
 		// this smells like a bad SQL paradigm
-		timeoutProcVal := s.randHexString()
+		timeoutProcVal := s.randHexString("tout")
 
 		err := qtx.UpdateStepAfterTimeout(ctx, sqlc.UpdateStepAfterTimeoutParams{
-			TimeoutProc: timeoutProcVal,
-			Timeout:     sql.NullTime{Valid: true, Time: now},
+			ProcessID: timeoutProcVal,
+			Timeout:   sql.NullTime{Valid: true, Time: now},
 		})
 		if err != nil {
 			return fmt.Errorf("update step with not until proc (%s): %w", timeoutProcVal.String, err)
