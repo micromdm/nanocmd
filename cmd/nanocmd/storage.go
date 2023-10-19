@@ -20,6 +20,8 @@ import (
 	storageprof "github.com/micromdm/nanocmd/subsystem/profile/storage"
 	storageprofdiskv "github.com/micromdm/nanocmd/subsystem/profile/storage/diskv"
 	storageprofinmem "github.com/micromdm/nanocmd/subsystem/profile/storage/inmem"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 type storageConfig struct {
