@@ -123,7 +123,7 @@ func (s *MySQLStorage) StoreCommandResponseAndRetrieveCompletedStep(ctx context.
 			return fmt.Errorf("remove id commands by step by id (%d): %w", cmdCt.StepID, err)
 		}
 
-		err = qtx.DeleteWorkflowStepHavingNoCommands(ctx, sd.WorkflowName)
+		err = qtx.DeleteWorkflowStepHavingNoCommandsByWorkflowName(ctx, sd.WorkflowName)
 		if err != nil {
 			return fmt.Errorf("delete workflow with no commands (%s): %w", sd.WorkflowName, err)
 		}
