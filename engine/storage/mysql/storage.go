@@ -229,8 +229,12 @@ func (s *MySQLStorage) CancelSteps(ctx context.Context, id, workflowName string)
 		}
 
 		if workflowName != "" {
-			err = qtx.DeleteWorkflowStepHavingNoCommands(ctx, workflowName)
+			err = qtx.DeleteWorkflowStepHavingNoCommandsByWorkflowName(ctx, workflowName)
 			if err != nil {
+				return fmt.Errorf("delete workflow step having no commands (%s): %w", workflowName, err)
+			}
+		} else {
+			if err = qtx.DeleteWorkflowStepHavingNoCommands(ctx); err != nil {
 				return fmt.Errorf("delete workflow step having no commands (%s): %w", workflowName, err)
 			}
 		}

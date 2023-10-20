@@ -185,12 +185,28 @@ FROM
   LEFT JOIN id_commands c
     ON s.id = c.step_id
 WHERE
+  c.step_id IS NULL
+`
+
+func (q *Queries) DeleteWorkflowStepHavingNoCommands(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, deleteWorkflowStepHavingNoCommands)
+	return err
+}
+
+const deleteWorkflowStepHavingNoCommandsByWorkflowName = `-- name: DeleteWorkflowStepHavingNoCommandsByWorkflowName :exec
+DELETE
+  s
+FROM
+  steps s
+  LEFT JOIN id_commands c
+    ON s.id = c.step_id
+WHERE
   c.step_id IS NULL AND
   s.workflow_name = ?
 `
 
-func (q *Queries) DeleteWorkflowStepHavingNoCommands(ctx context.Context, workflowName string) error {
-	_, err := q.db.ExecContext(ctx, deleteWorkflowStepHavingNoCommands, workflowName)
+func (q *Queries) DeleteWorkflowStepHavingNoCommandsByWorkflowName(ctx context.Context, workflowName string) error {
+	_, err := q.db.ExecContext(ctx, deleteWorkflowStepHavingNoCommandsByWorkflowName, workflowName)
 	return err
 }
 

@@ -54,6 +54,16 @@ FROM
   LEFT JOIN id_commands c
     ON s.id = c.step_id
 WHERE
+  c.step_id IS NULL;
+
+-- name: DeleteWorkflowStepHavingNoCommandsByWorkflowName :exec
+DELETE
+  s
+FROM
+  steps s
+  LEFT JOIN id_commands c
+    ON s.id = c.step_id
+WHERE
   c.step_id IS NULL AND
   s.workflow_name = ?;
 
