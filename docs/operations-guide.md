@@ -88,6 +88,17 @@ Configures the `inmem` storage backend. Data is stored entirely in-memory and is
 
 *Example:* `-storage inmem`
 
+##### mysql storage backend
+
+* `-storage mysql`
+
+Configures the MySQL storage backend. The `-storage-dsn` flag should be in the [format the SQL driver expects](https://github.com/go-sql-driver/mysql#dsn-data-source-name).
+Be sure to create the storage tables with the [schema.sql](../storage/mysql/schema.sql) file. MySQL 8.0.19 or later is required.
+
+**WARNING:** The MySQL backend currently only implements storage for the workflow *engine*. When running NanoCMD the *subsystem* storage is completely in-memory as if you supplied `-storage inmem`. The practical effect is that subsystem storage is volatile and no data will be persisted for them.
+
+*Example:* `-storage mysql -dsn nanocmd:nanocmd/mycmddb`
+
 #### -version
 
  * print version

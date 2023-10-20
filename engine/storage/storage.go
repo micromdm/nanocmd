@@ -55,6 +55,21 @@ type StepCommandResult struct {
 	Completed    bool   // whether this specific command did *not* have a NotNow status
 }
 
+var (
+	ErrEmptyStepCommandResult = errors.New("empty step command result")
+	ErrEmptyResultReport      = errors.New("empty result report")
+)
+
+// Validate checks sc for issues.
+func (sc *StepCommandResult) Validate() error {
+	if sc == nil {
+		return ErrEmptyStepCommandResult
+	} else if len(sc.ResultReport) < 1 {
+		return ErrEmptyResultReport
+	}
+	return nil
+}
+
 // StepCommandRaw is a raw command, its UUID, and request type.
 // An approximately serialized form of a workflow step command.
 type StepCommandRaw struct {
@@ -187,6 +202,7 @@ type WorkerStorage interface {
 type AllStorage interface {
 	Storage
 	WorkerStorage
+	EventSubscriptionStorage
 }
 
 // EventSubscription is a user-configured subscription for starting workflows with optional context.

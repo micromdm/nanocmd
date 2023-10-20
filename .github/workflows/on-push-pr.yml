@@ -83,3 +83,45 @@ jobs:
         with:
           name: release-zips
           path: "*.zip"
+  mysql-test:
+    runs-on: 'ubuntu-latest'
+    needs: format-build-test
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_RANDOM_ROOT_PASSWORD: yes
+          MYSQL_DATABASE: nanocmd
+          MYSQL_USER: nanocmd
+          MYSQL_PASSWORD: nanocmd
+        ports:
+          - 3800:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=5s --health-timeout=2s --health-retries=3
+    defaults:
+      run:
+        shell: bash
+    env:
+      MYSQL_PWD: nanocmd
+      PORT: 3800
+    steps:
+      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608  # v4.1.0
+
+      - uses: actions/setup-go@6edd4406fa81c3da01a34fa6f6343087c207a568  # v3.5.0
+        with:
+          go-version: '1.19.x'
+
+      - name: verify mysql
+        run: |
+          while ! mysqladmin ping --host=localhost --port=$PORT --protocol=TCP --silent; do
+            sleep 1
+          done
+
+      - name: mysql schema
+        run: |
+          mysql --version
+          mysql --user=nanocmd --host=localhost --port=$PORT --protocol=TCP nanocmd < ./engine/storage/mysql/schema.sql
+
+      - name: setup test dsn
+        run: echo "NANOCMD_MYSQL_STORAGE_TEST_DSN=nanocmd:nanocmd@tcp(localhost:$PORT)/nanocmd" >> $GITHUB_ENV
+
+      - run: go test -v ./engine/storage/mysql

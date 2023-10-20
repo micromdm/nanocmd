@@ -94,6 +94,16 @@ func testEngineStorageNotUntil(t *testing.T, s storage.AllStorage) {
 			if have, want := len(steps), test.stepsWanted2; have != want {
 				t.Fatalf("expected steps (2nd): have %v, want %v", have, want)
 			}
+
+			// cancel these steps so they don't hang around for other tests to get confused on
+			for _, step := range test.steps {
+				for _, id := range step.IDs {
+					if err = s.CancelSteps(ctx, id, step.WorkflowName); err != nil {
+						t.Errorf("cancelling steps (%s, %s): %v", id, step.WorkflowName, err)
+					}
+				}
+			}
+
 		})
 	}
 }
@@ -129,8 +139,9 @@ func testEngineStepTimeout(t *testing.T, s storage.AllStorage) {
 						},
 						Commands: []storage.StepCommandRaw{
 							{
-								CommandUUID: "UUID-1",
+								CommandUUID: "Y-UUID-1",
 								RequestType: "DeviceInformation",
+								Command:     []byte("Y-UUID-1"),
 							},
 						},
 					},
@@ -141,7 +152,7 @@ func testEngineStepTimeout(t *testing.T, s storage.AllStorage) {
 				{
 					id: "EnrollmentID-1",
 					sc: storage.StepCommandResult{
-						CommandUUID:  "UUID-1",
+						CommandUUID:  "Y-UUID-1",
 						RequestType:  "DeviceInformation",
 						ResultReport: []byte("Command-1"),
 						Completed:    true,
@@ -220,13 +231,13 @@ func testRepush(t *testing.T, s storage.AllStorage) {
 			},
 			Commands: []storage.StepCommandRaw{
 				{
-					CommandUUID: "UUID-1",
+					CommandUUID: "W-UUID-1",
 					RequestType: "DeviceInformation",
 					Command:     []byte("Command-1"),
 				},
 			},
 		},
-		// NotUntil: not setting NotUntil to sure these are simulated to be sent pushes "now"
+		// NotUntil: not setting NotUntil to be sure these are simulated to be sent pushes "now"
 	}
 
 	now := time.Now()
@@ -238,7 +249,7 @@ func testRepush(t *testing.T, s storage.AllStorage) {
 
 	// complete one of the commands
 	_, err = s.StoreCommandResponseAndRetrieveCompletedStep(ctx, enq.IDs[0], &storage.StepCommandResult{
-		CommandUUID:  "UUID-1",
+		CommandUUID:  "W-UUID-1",
 		RequestType:  "DeviceInformation",
 		ResultReport: []byte("Result-1"),
 		Completed:    true,
@@ -247,8 +258,8 @@ func testRepush(t *testing.T, s storage.AllStorage) {
 		t.Fatal(err)
 	}
 
-	ifBefore := now.Add(time.Second)
-	now = ifBefore.Add(time.Second)
+	ifBefore := now.Add(time.Second * 2)
+	now = ifBefore.Add(time.Second * 2)
 
 	ids, err := s.RetrieveAndMarkRePushed(ctx, ifBefore, now)
 	if err != nil {
@@ -282,7 +293,7 @@ func testRepush(t *testing.T, s storage.AllStorage) {
 				},
 			},
 		},
-		NotUntil: time.Now().Add(-time.Minute),
+		NotUntil: now.Add(-time.Minute),
 	}
 
 	err = s.StoreStep(ctx, enq2, now)
@@ -307,8 +318,8 @@ func testRepush(t *testing.T, s storage.AllStorage) {
 		t.Fatal(err)
 	}
 
-	ifBefore = now.Add(time.Second)
-	now = ifBefore.Add(time.Second)
+	ifBefore = now.Add(time.Second * 2)
+	now = ifBefore.Add(time.Second * 2)
 
 	ids, err = s.RetrieveAndMarkRePushed(ctx, ifBefore, now)
 	if err != nil {
