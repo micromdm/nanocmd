@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/alexedwards/flow v0.0.0-20220806114457-cf11be9e0e03
 	github.com/go-sql-driver/mysql v1.7.1
-	github.com/google/uuid v1.3.1
+	github.com/google/uuid v1.4.0
 	github.com/groob/plist v0.0.0-20220217120414-63fa881b19a5
 	github.com/jessepeterson/mdmcommands v0.0.0-20230517161100-c5ca4128e1e3
 	github.com/peterbourgon/diskv/v3 v3.0.1
