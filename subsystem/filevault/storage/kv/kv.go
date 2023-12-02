@@ -10,7 +10,7 @@ import (
 	"github.com/micromdm/nanocmd/subsystem/filevault/storage"
 	"github.com/micromdm/nanocmd/utils/cryptoutil"
 	"github.com/micromdm/nanocmd/utils/kv"
-	"go.mozilla.org/pkcs7"
+	"github.com/smallstep/pkcs7"
 )
 
 // KV is a FileVault storage backend based on a key-value store.

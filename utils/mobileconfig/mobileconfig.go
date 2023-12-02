@@ -7,7 +7,7 @@ import (
 	"fmt"
 
 	"github.com/groob/plist"
-	"go.mozilla.org/pkcs7"
+	"github.com/smallstep/pkcs7"
 )
 
 // Payload is some of the "top-level" configuration profile information.
