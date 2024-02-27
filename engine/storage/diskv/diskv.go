@@ -34,5 +34,10 @@ func New(path string) *Diskv {
 			CacheSizeMax: 1024 * 1024,
 		})),
 		uuid.NewUUID(),
+		kvdiskv.NewBucket(diskv.New(diskv.Options{
+			BasePath:     filepath.Join(path, "engine", "wfstatus"),
+			Transform:    flatTransform,
+			CacheSizeMax: 1024 * 1024,
+		})),
 	)}
 }

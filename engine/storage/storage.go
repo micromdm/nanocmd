@@ -141,6 +141,17 @@ type StepResult struct {
 	Commands []StepCommandResult
 }
 
+type WorkflowStatusStorage interface {
+	// RetrieveWorkflowStarted returns the last time a workflow was started for id.
+	RetrieveWorkflowStarted(ctx context.Context, id, workflowName string) (time.Time, error)
+
+	// RecordWorkflowStarted stores the started time for workflowName for ids.
+	RecordWorkflowStarted(ctx context.Context, ids []string, workflowName string, started time.Time) error
+
+	// ClearWorkflowStatus removes all workflow start times for id.
+	ClearWorkflowStatus(ctx context.Context, id string) error
+}
+
 // Storage is the primary interface for workflow engine backend storage implementations.
 type Storage interface {
 	// RetrieveCommandRequestType retrieves a command request type given id and uuid.
@@ -172,6 +183,8 @@ type Storage interface {
 	// workflow steps for the id. "NotUntil" (future) workflows steps
 	// should also be canceled.
 	CancelSteps(ctx context.Context, id, workflowName string) error
+
+	WorkflowStatusStorage
 }
 
 // WorkerStorage is used by the workflow engine worker for async (scheduled) actions.
@@ -207,9 +220,10 @@ type AllStorage interface {
 
 // EventSubscription is a user-configured subscription for starting workflows with optional context.
 type EventSubscription struct {
-	Event    string `json:"event"`
-	Workflow string `json:"workflow"`
-	Context  string `json:"context,omitempty"`
+	Event        string `json:"event"`
+	Workflow     string `json:"workflow"`
+	Context      string `json:"context,omitempty"`
+	EventContext string `json:"event_context,omitempty"`
 }
 
 var (

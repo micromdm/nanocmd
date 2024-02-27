@@ -2,6 +2,7 @@
 SELECT
   event_name,
   context,
+  event_context,
   workflow_name,
   event_type
 FROM
@@ -12,6 +13,7 @@ WHERE
 -- name: GetEventsByType :many
 SELECT
   context,
+  event_context,
   workflow_name,
   event_type
 FROM

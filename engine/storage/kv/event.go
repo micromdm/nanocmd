@@ -13,9 +13,10 @@ import (
 )
 
 const (
-	keySfxEventFlag     = ".flag" // contains a strconv integer
-	keySfxEventWorkflow = ".name"
-	keySfxEventContext  = ".ctx"
+	keySfxEventFlag         = ".flag" // contains a strconv integer
+	keySfxEventWorkflow     = ".name"
+	keySfxEventContext      = ".ctx"
+	keySfxEventEventContext = ".evctx"
 )
 
 type kvEventSubscription struct {
@@ -36,6 +37,9 @@ func (es *kvEventSubscription) set(ctx context.Context, b kv.Bucket, name string
 	}
 	if len(es.Context) > 0 {
 		esMap[name+keySfxEventContext] = []byte(es.Context)
+	}
+	if len(es.EventContext) > 0 {
+		esMap[name+keySfxEventEventContext] = []byte(es.EventContext)
 	}
 	return kv.SetMap(ctx, b, esMap)
 }
@@ -62,13 +66,21 @@ func (es *kvEventSubscription) get(ctx context.Context, b kv.Bucket, name string
 	es.Event = workflow.EventFlag(eventFlag).String()
 	if ok, err := b.Has(ctx, name+keySfxEventContext); err != nil {
 		return fmt.Errorf("checking event context: %w", err)
-	} else if !ok {
-		return nil
+	} else if ok {
+		if ctxBytes, err := b.Get(ctx, name+keySfxEventContext); err != nil {
+			return fmt.Errorf("getting event context: %w", err)
+		} else {
+			es.Context = string(ctxBytes)
+		}
 	}
-	if ctxBytes, err := b.Get(ctx, name+keySfxEventContext); err != nil {
-		return fmt.Errorf("getting event context: %w", err)
-	} else {
-		es.Context = string(ctxBytes)
+	if ok, err := b.Has(ctx, name+keySfxEventEventContext); err != nil {
+		return fmt.Errorf("checking event event_context: %w", err)
+	} else if ok {
+		if evCtxBytes, err := b.Get(ctx, name+keySfxEventEventContext); err != nil {
+			return fmt.Errorf("getting event event_context: %w", err)
+		} else {
+			es.EventContext = string(evCtxBytes)
+		}
 	}
 	return nil
 }
@@ -145,5 +157,6 @@ func (s *KV) DeleteEventSubscription(ctx context.Context, name string) error {
 		name + keySfxEventFlag,
 		name + keySfxEventWorkflow,
 		name + keySfxEventContext,
+		name + keySfxEventEventContext,
 	})
 }

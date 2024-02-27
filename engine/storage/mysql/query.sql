@@ -153,3 +153,17 @@ WHERE
   c.completed = 0 AND
   s.workflow_name = ?;
 
+-- name: GetWorkflowLastStarted :one
+SELECT
+  last_created_at
+FROM
+  wf_status
+WHERE
+  enrollment_id = ? AND
+  workflow_name = ?;
+
+-- name: ClearWorkflowStatus :exec
+DELETE FROM
+  wf_status
+WHERE
+  enrollment_id = ?;

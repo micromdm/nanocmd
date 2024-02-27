@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -15,20 +16,22 @@ import (
 
 // KV is a workflow engine storage backend using a key-value interface.
 type KV struct {
-	mu         sync.RWMutex
-	stepStore  kv.TraversingBucket
-	idCmdStore kv.TraversingBucket
-	eventStore kv.TraversingBucket
-	ider       uuid.IDer
+	mu          sync.RWMutex
+	stepStore   kv.TraversingBucket
+	idCmdStore  kv.TraversingBucket
+	eventStore  kv.TraversingBucket
+	ider        uuid.IDer
+	statusStore kv.TraversingBucket
 }
 
 // New creates a new key-value workflow engine storage backend.
-func New(stepStore kv.TraversingBucket, idCmdStore kv.TraversingBucket, eventStore kv.TraversingBucket, ider uuid.IDer) *KV {
+func New(stepStore kv.TraversingBucket, idCmdStore kv.TraversingBucket, eventStore kv.TraversingBucket, ider uuid.IDer, statusStore kv.TraversingBucket) *KV {
 	return &KV{
-		stepStore:  stepStore,
-		idCmdStore: idCmdStore,
-		eventStore: eventStore,
-		ider:       ider,
+		stepStore:   stepStore,
+		idCmdStore:  idCmdStore,
+		eventStore:  eventStore,
+		ider:        ider,
+		statusStore: statusStore,
 	}
 }
 
@@ -280,4 +283,52 @@ func (s *KV) CancelSteps(ctx context.Context, id, workflowName string) error {
 		}
 	}
 	return nil
+}
+
+func workflowStatusKey(id, workflowName string) string {
+	return id + "." + workflowName
+}
+
+// RetrieveWorkflowStarted returns the last time a workflow was started for id.
+func (s *KV) RetrieveWorkflowStarted(ctx context.Context, id, workflowName string) (time.Time, error) {
+	var started time.Time
+	if found, err := s.statusStore.Has(ctx, workflowStatusKey(id, workflowName)); err != nil {
+		return started, fmt.Errorf("status not found for id=%s workflow=%s: %w", id, workflowName, err)
+	} else if !found {
+		return started, nil
+	}
+	b, err := s.statusStore.Get(ctx, workflowStatusKey(id, workflowName))
+	if err != nil {
+		return started, fmt.Errorf("getting workflow status: %w", err)
+	}
+	if err = started.UnmarshalText(b); err != nil {
+		err = fmt.Errorf("unmarshaling workflow status: %w", err)
+	}
+	return started, err
+}
+
+// RecordWorkflowStarted stores the started time for workflowName for ids.
+func (s *KV) RecordWorkflowStarted(ctx context.Context, ids []string, workflowName string, started time.Time) error {
+	b, err := started.MarshalText()
+	if err != nil {
+		return fmt.Errorf("marshaling workflow status: %w", err)
+	}
+	for _, id := range ids {
+		if err = s.statusStore.Set(ctx, workflowStatusKey(id, workflowName), b); err != nil {
+			return fmt.Errorf("setting workflow status for id=%s workflow=%s: %w", id, workflowName, err)
+		}
+	}
+	return nil
+}
+
+// ClearWorkflowStatus removes all workflow start times for id.
+func (s *KV) ClearWorkflowStatus(ctx context.Context, id string) error {
+	var toDelete []string
+	for k := range s.statusStore.Keys(nil) {
+		// very inefficient! this could be a large table
+		if strings.HasPrefix(k, id+".") {
+			toDelete = append(toDelete, k)
+		}
+	}
+	return kv.DeleteSlice(ctx, s.statusStore, toDelete)
 }

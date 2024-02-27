@@ -397,7 +397,7 @@ components:
         event:
           type: string
           description: Event type to subscribe to.
-          enum: [Enrollment, Authenticate, TokenUpdate, CheckOut]
+          enum: [Enrollment, Authenticate, TokenUpdate, CheckOut, Idle, IdleNotStartedSince]
         workflow:
           type: string
           description: Name of NanoCMD workflow.
@@ -405,6 +405,9 @@ components:
         context:
           type: string
           description: Workflow-dependent context.
+        event_context:
+          type: string
+          description: Event-dependent context.
     JSONError:
       type: object
       properties:

@@ -267,11 +267,38 @@ func mainTest(t *testing.T, s storage.AllStorage) {
 			// 	t.Fatalf("invalid test data: step enqueueing with config: %v", err)
 			// }
 
-			err := s.StoreStep(ctx, tStep.step, time.Now())
+			// some backends may truncate the time and drop TZ
+			// so let's truncate ourselves and eliminate the TZ.
+			// since this value is used to compare the retrived value
+			// we'll stick with that.
+			storedAt := time.Now().UTC().Truncate(time.Second)
+
+			err := s.StoreStep(ctx, tStep.step, storedAt)
 			if tStep.shouldError && err == nil {
 				t.Fatalf("StoreStep: expected error; step=%v", tStep.step)
 			} else if !tStep.shouldError && err != nil {
 				t.Fatalf("StoreStep: expected no error; step=%v err=%v", tStep.step, err)
+			}
+
+			if err != nil && tStep.step != nil {
+				if len(tStep.step.IDs) > 0 {
+					err = s.RecordWorkflowStarted(ctx, tStep.step.IDs, tStep.step.WorkflowName, storedAt)
+					if err != nil {
+						t.Errorf("RecordWorkflowStarted: error for step=%s: %v", tStep.step.WorkflowName, err)
+					}
+				}
+
+				for _, id := range tStep.step.IDs {
+					ts, err := s.RetrieveWorkflowStarted(ctx, id, tStep.step.WorkflowName)
+					if err != nil {
+						t.Fatalf("RetrieveWorkflowStarted: error for id=%s, step=%s err=%v", id, tStep.step.WorkflowName, err)
+					}
+					if ts.IsZero() {
+						t.Errorf("RetrieveWorkflowStarted: nil timestamp for id=%s, step=%s err=%v", id, tStep.step.WorkflowName, err)
+					} else if ts != storedAt {
+						t.Errorf("RetrieveWorkflowStarted: timestamp mismatch for id=%s, step=%s expected=%v got=%v", id, tStep.step.WorkflowName, storedAt, ts)
+					}
+				}
 			}
 
 			for _, tRespStep := range tStep.respSteps {

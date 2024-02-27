@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"sync"
 	"time"
 
@@ -188,6 +189,9 @@ func (e *Engine) StartWorkflow(ctx context.Context, name string, context []byte,
 		if err = w.Start(ctx, ss); err != nil {
 			return instanceID, fmt.Errorf("staring workflow: %w", err)
 		}
+		if err = e.storage.RecordWorkflowStarted(ctx, startID, name, time.Now()); err != nil {
+			return instanceID, fmt.Errorf("recording workflow status: %w", err)
+		}
 		logger.Debug(
 			logkeys.InstanceID, instanceID,
 			logkeys.Message, "starting workflow",
@@ -288,6 +292,114 @@ func logAndError(err error, logger log.Logger, msg string) error {
 	return fmt.Errorf("%s: %w", msg, err)
 }
 
+// MDMIdleEvent is called when an MDM Report Results has an "Idle" status.
+// MDMIdleEvent will dispatch workflow "Idle" events (for workflows that are
+// configured for it) and will also start workflows for the "IdleNotStartedSince"
+// event subscription type.
+// Note: any other event subscription type starting workflows is not supported.
+func (e *Engine) MDMIdleEvent(ctx context.Context, id string, raw []byte, mdmContext *workflow.MDMContext, eventAt time.Time) error {
+	logger := ctxlog.Logger(ctx, e.logger).With(logkeys.EnrollmentID, id)
+
+	// dispatch the events to (only) the workflow events
+	event := &workflow.Event{EventFlag: workflow.EventIdle}
+	if err := e.dispatchEvents(ctx, id, event, mdmContext, false, true); err != nil {
+		logger.Info(
+			logkeys.Message, "idle event: dispatch workflow events",
+			logkeys.Event, event.EventFlag,
+			logkeys.Error, err,
+		)
+	}
+
+	if e.eventStorage == nil {
+		return nil
+	}
+
+	subs, err := e.eventStorage.RetrieveEventSubscriptionsByEvent(ctx, workflow.EventIdleNotStartedSince)
+	if err != nil {
+		logger.Info(
+			logkeys.Message, "retrieving event subscriptions",
+			logkeys.Event, workflow.EventIdleNotStartedSince,
+			logkeys.Error, err,
+		)
+	}
+
+	if len(subs) < 1 {
+		return nil
+	}
+
+	var wg sync.WaitGroup
+	event = &workflow.Event{EventFlag: workflow.EventIdleNotStartedSince}
+	for _, sub := range subs {
+		wg.Add(1)
+		go func(es *storage.EventSubscription) {
+			defer wg.Done()
+
+			if es == nil {
+				return
+			}
+
+			subLogger := logger.With(
+				logkeys.Event, workflow.EventIdleNotStartedSince,
+				logkeys.WorkflowName, es.Workflow,
+			)
+
+			// get the last time this workflow started for this
+			// enrollment ID for the workflow was subscribed to.
+			started, err := e.storage.RetrieveWorkflowStarted(ctx, id, es.Workflow)
+			if err != nil {
+				subLogger.Info(
+					logkeys.Message, "retrieving workflow status",
+					logkeys.Error, err,
+				)
+				return
+			}
+
+			// make sure we have a valid event context (time between runs)
+			if es.EventContext == "" {
+				subLogger.Info(
+					logkeys.Error, "event context is empty",
+				)
+				return
+			}
+			sinceSeconds, err := strconv.Atoi(es.EventContext)
+			if err != nil {
+				subLogger.Info(
+					logkeys.Message, "converting event context to integer",
+					logkeys.Error, err,
+				)
+				return
+			} else if sinceSeconds < 1 {
+				subLogger.Info(
+					logkeys.Error, "event context less than 1 second",
+				)
+				return
+			}
+
+			// check if we've run this workflow "recently"
+			if !eventAt.After(started.Add(time.Second * time.Duration(sinceSeconds))) {
+				// TODO: hide behind an "extra" debug flag?
+				// subLogger.Debug(logkeys.Message, "workflow not due yet")
+				return
+			}
+
+			if instanceID, err := e.StartWorkflow(ctx, es.Workflow, []byte(es.Context), []string{id}, event, mdmContext); err != nil {
+				subLogger.Info(
+					logkeys.Message, "start workflow",
+					logkeys.InstanceID, instanceID,
+					logkeys.Error, err,
+				)
+			} else {
+				subLogger.Debug(
+					logkeys.Message, "started workflow",
+					logkeys.InstanceID, instanceID,
+				)
+			}
+		}(sub)
+	}
+	wg.Wait()
+	return nil
+}
+
 // MDMCommandResponseEvent receives MDM command responses.
 func (e *Engine) MDMCommandResponseEvent(ctx context.Context, id string, uuid string, raw []byte, mdmContext *workflow.MDMContext) error {
 	logger := ctxlog.Logger(ctx, e.logger).With(
@@ -374,14 +486,15 @@ func (e *Engine) MDMCommandResponseEvent(ctx context.Context, id string, uuid st
 
 // dispatchEvents dispatches MDM check-in events.
 // this includes event subscriptions (user configured) and workflow
-// configurations.
-func (e *Engine) dispatchEvents(ctx context.Context, id string, ev *workflow.Event, mdmCtx *workflow.MDMContext) error {
+// configs. The bool subEV as true indicates to run subscription event
+// workflows and wfEV indicates to run workflow-configured events.
+func (e *Engine) dispatchEvents(ctx context.Context, id string, ev *workflow.Event, mdmCtx *workflow.MDMContext, subEV, wfEV bool) error {
 	logger := ctxlog.Logger(ctx, e.logger).With(
-		"event", ev.EventFlag,
+		logkeys.Event, ev.EventFlag,
 		logkeys.EnrollmentID, id,
 	)
 	var wg sync.WaitGroup
-	if e.eventStorage != nil {
+	if subEV && e.eventStorage != nil {
 		subs, err := e.eventStorage.RetrieveEventSubscriptionsByEvent(ctx, ev.EventFlag)
 		if err != nil {
 			logger.Info(
@@ -411,23 +524,25 @@ func (e *Engine) dispatchEvents(ctx context.Context, id string, ev *workflow.Eve
 			}
 		}
 	}
-	for _, w := range e.eventWorkflows(ev.EventFlag) {
-		wg.Add(1)
-		go func(w workflow.Workflow) {
-			defer wg.Done()
-			if err := w.Event(ctx, ev, id, mdmCtx); err != nil {
-				logger.Info(
-					logkeys.Message, "workflow event",
-					logkeys.WorkflowName, w.Name(),
-					logkeys.Error, err,
-				)
-			} else {
-				logger.Debug(
-					logkeys.Message, "workflow event",
-					logkeys.WorkflowName, w.Name(),
-				)
-			}
-		}(w)
+	if wfEV {
+		for _, w := range e.eventWorkflows(ev.EventFlag) {
+			wg.Add(1)
+			go func(w workflow.Workflow) {
+				defer wg.Done()
+				if err := w.Event(ctx, ev, id, mdmCtx); err != nil {
+					logger.Info(
+						logkeys.Message, "workflow event",
+						logkeys.WorkflowName, w.Name(),
+						logkeys.Error, err,
+					)
+				} else {
+					logger.Debug(
+						logkeys.Message, "workflow event",
+						logkeys.WorkflowName, w.Name(),
+					)
+				}
+			}(w)
+		}
 	}
 	wg.Wait()
 	return nil
@@ -485,12 +600,16 @@ func (e *Engine) MDMCheckinEvent(ctx context.Context, id string, checkin interfa
 		if err := e.storage.CancelSteps(ctx, id, ""); err != nil {
 			return logAndError(err, logger, "checkin event: cancel steps")
 		}
+		// also clear out any workflow status for an id
+		if err := e.storage.ClearWorkflowStatus(ctx, id); err != nil {
+			return logAndError(err, logger, "checkin event: clearing workflow status")
+		}
 	}
 	for _, event := range events {
-		if err := e.dispatchEvents(ctx, id, event, mdmContext); err != nil {
+		if err := e.dispatchEvents(ctx, id, event, mdmContext, true, true); err != nil {
 			logger.Info(
 				logkeys.Message, "checkin event: dispatch events",
-				"event", event.EventFlag,
+				logkeys.Event, event.EventFlag,
 				logkeys.Error, err,
 			)
 		}
