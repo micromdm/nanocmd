@@ -12,9 +12,10 @@ func TestEventStorage(t *testing.T, store storage.EventSubscriptionStorage) {
 	ctx := context.Background()
 
 	evTest := &storage.EventSubscription{
-		Event:    "Enrollment",
-		Workflow: "wf",
-		Context:  "ctx",
+		Event:        "Enrollment",
+		Workflow:     "wf",
+		Context:      "ctx",
+		EventContext: "evCtx",
 	}
 
 	testEventData := func(t *testing.T, es *storage.EventSubscription) {
@@ -36,6 +37,10 @@ func TestEventStorage(t *testing.T, store storage.EventSubscriptionStorage) {
 		}
 
 		if have, want := es.Context, evTest.Context; have != want {
+			t.Errorf("[context] have: %v, want: %v", have, want)
+		}
+
+		if have, want := es.EventContext, evTest.EventContext; have != want {
 			t.Errorf("[context] have: %v, want: %v", have, want)
 		}
 	}

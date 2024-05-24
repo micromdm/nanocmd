@@ -53,7 +53,7 @@ func (s *MySQLStorage) StoreEventSubscription(ctx context.Context, name string, 
 		ctx,
 		`
 INSERT INTO wf_events
-  (event_name, event_type, workflow_name, context, event_context)
+  (event_name, event_type, workflow_name, event_context, context)
 VALUES
   (?, ?, ?, ?, ?) AS new
 ON DUPLICATE KEY
