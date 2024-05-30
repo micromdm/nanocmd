@@ -23,3 +23,6 @@ sql:
             go_type:
               type: "byte"
               slice: true
+          - column: "wf_status.last_created_at"
+            go_type:
+              type: "string"

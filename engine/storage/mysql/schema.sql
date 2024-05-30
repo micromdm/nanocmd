@@ -68,6 +68,7 @@ CREATE TABLE wf_events (
     event_name VARCHAR(255) NOT NULL,
 
     context       MEDIUMTEXT   NULL,
+    event_context MEDIUMTEXT   NULL,
     workflow_name VARCHAR(255) NOT NULL,
     event_type    VARCHAR(63)  NOT NULL,
 
@@ -77,4 +78,19 @@ CREATE TABLE wf_events (
     INDEX (event_type),
 
     PRIMARY KEY (event_name)
+);
+
+CREATE TABLE wf_status (
+    enrollment_id VARCHAR(255) NOT NULL,
+    workflow_name VARCHAR(255) NOT NULL,
+
+    last_created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    INDEX (enrollment_id),
+    INDEX (workflow_name),
+
+    PRIMARY KEY (enrollment_id, workflow_name)
 );

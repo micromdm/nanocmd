@@ -43,3 +43,14 @@ func GetMap(ctx context.Context, b Bucket, keys []string) (map[string][]byte, er
 	}
 	return ret, nil
 }
+
+// DeleteSlice deletes s keys from b.
+func DeleteSlice(ctx context.Context, b Bucket, s []string) error {
+	var err error
+	for _, i := range s {
+		if err = b.Delete(ctx, i); err != nil {
+			return fmt.Errorf("deleting %s: %w", i, err)
+		}
+	}
+	return nil
+}

@@ -3,6 +3,7 @@ package foss
 import (
 	"context"
 	"io"
+	"time"
 
 	"github.com/micromdm/nanocmd/workflow"
 )
@@ -21,6 +22,12 @@ func NewMDMEventDumper(next MDMEventReceiver, output io.Writer) *MDMEventDumper 
 func (d *MDMEventDumper) MDMCommandResponseEvent(ctx context.Context, id string, uuid string, raw []byte, mdmContext *workflow.MDMContext) error {
 	d.output.Write(append(raw, '\n'))
 	return d.next.MDMCommandResponseEvent(ctx, id, uuid, raw, mdmContext)
+}
+
+// MDMIdleEvent is called when an MDM Report Results has an "Idle" status.
+func (d *MDMEventDumper) MDMIdleEvent(ctx context.Context, id string, raw []byte, mdmContext *workflow.MDMContext, eventAt time.Time) error {
+	d.output.Write(append(raw, '\n'))
+	return d.next.MDMIdleEvent(ctx, id, raw, mdmContext, eventAt)
 }
 
 // MDMCheckinEvent processes the next eventer.

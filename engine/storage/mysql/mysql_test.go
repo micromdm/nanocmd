@@ -21,5 +21,15 @@ func TestMySQLStorage(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	// to test using an existing DB/DSN:
+	//
+	// DELETE FROM id_commands;
+	// DELETE FROM steps;
+	// DELETE FROM wf_events;
+	//
+	// this clears out some left-over workflow starts that are
+	// intentionally left incomplete but are re-used when another
+	// test is completed
+
 	test.TestEngineStorage(t, func() storage.AllStorage { return s })
 }

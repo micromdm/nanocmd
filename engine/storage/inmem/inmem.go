@@ -18,5 +18,6 @@ func New() *InMem {
 		kvmap.NewBucket(),
 		kvmap.NewBucket(),
 		uuid.NewUUID(),
+		kvmap.NewBucket(),
 	)}
 }

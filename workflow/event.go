@@ -22,6 +22,8 @@ const (
 	// continually arrive.
 	EventEnrollment
 	EventCheckOut
+	EventIdle
+	EventIdleNotStartedSince
 	maxEventFlag
 )
 
@@ -41,6 +43,10 @@ func (e EventFlag) String() string {
 		return "Enrollment"
 	case EventCheckOut:
 		return "CheckOut"
+	case EventIdle:
+		return "Idle"
+	case EventIdleNotStartedSince:
+		return "IdleNotStartedSince"
 	default:
 		return fmt.Sprintf("unknown event type: %d", e)
 	}
@@ -58,6 +64,10 @@ func EventFlagForString(s string) EventFlag {
 		return EventEnrollment
 	case "CheckOut":
 		return EventCheckOut
+	case "Idle":
+		return EventIdle
+	case "IdleNotStartedSince":
+		return EventIdleNotStartedSince
 	default:
 		return 0
 	}

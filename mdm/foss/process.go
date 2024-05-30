@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/groob/plist"
 	"github.com/micromdm/nanocmd/mdm"
@@ -13,6 +14,9 @@ import (
 
 type MDMCommandResponseEventer interface {
 	MDMCommandResponseEvent(ctx context.Context, id string, uuid string, raw []byte, mdmContext *workflow.MDMContext) error
+
+	// MDMIdleEvent is called when an MDM Report Results has an "Idle" status.
+	MDMIdleEvent(ctx context.Context, id string, raw []byte, mdmContext *workflow.MDMContext, eventAt time.Time) error
 }
 
 type MDMCheckinEventer interface {
@@ -39,11 +43,11 @@ func processAcknowledgeEvent(ctx context.Context, e *AcknowledgeEvent, ev MDMCom
 	if e == nil {
 		return errors.New("empty acknowledge event")
 	}
-	if e.Status == "Idle" || e.CommandUUID == "" {
-		return nil
-	}
 	id, mdmContext := idAndContext(e.UDID, e.EnrollmentID, e.Params)
-	return ev.MDMCommandResponseEvent(ctx, id, e.CommandUUID, e.RawPayload, mdmContext)
+	if e.Status != "Idle" {
+		return ev.MDMCommandResponseEvent(ctx, id, e.CommandUUID, e.RawPayload, mdmContext)
+	}
+	return ev.MDMIdleEvent(ctx, id, e.RawPayload, mdmContext, time.Now())
 }
 
 func processCheckinEvent(ctx context.Context, topic string, e *CheckinEvent, ev MDMCheckinEventer) error {

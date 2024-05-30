@@ -22,4 +22,6 @@ const (
 
 	// a context-dependent numerical count/length of something
 	GenericCount = "count"
+
+	Event = "event"
 )

@@ -18,9 +18,10 @@ func (s *MySQLStorage) RetrieveEventSubscriptions(ctx context.Context, names []s
 	retEvents := make(map[string]*storage.EventSubscription)
 	for _, event := range events {
 		retEvents[event.EventName] = &storage.EventSubscription{
-			Event:    event.EventType,
-			Workflow: event.WorkflowName,
-			Context:  event.Context.String,
+			Event:        event.EventType,
+			Workflow:     event.WorkflowName,
+			Context:      event.Context.String,
+			EventContext: event.EventContext.String,
 		}
 	}
 	return retEvents, nil
@@ -36,9 +37,10 @@ func (s *MySQLStorage) RetrieveEventSubscriptionsByEvent(ctx context.Context, f 
 	var retEvents []*storage.EventSubscription
 	for _, event := range events {
 		retEvents = append(retEvents, &storage.EventSubscription{
-			Event:    event.EventType,
-			Workflow: event.WorkflowName,
-			Context:  event.Context.String,
+			Event:        event.EventType,
+			Workflow:     event.WorkflowName,
+			Context:      event.Context.String,
+			EventContext: event.EventContext.String,
 		})
 	}
 	return retEvents, nil
@@ -51,17 +53,19 @@ func (s *MySQLStorage) StoreEventSubscription(ctx context.Context, name string, 
 		ctx,
 		`
 INSERT INTO wf_events
-  (event_name, event_type, workflow_name, context)
+  (event_name, event_type, workflow_name, event_context, context)
 VALUES
-  (?, ?, ?, ?) AS new
+  (?, ?, ?, ?, ?) AS new
 ON DUPLICATE KEY
 UPDATE
   workflow_name = new.workflow_name,
   event_type = new.event_type,
+  event_context = new.event_context,
   context = new.context;`,
 		name,
 		es.Event,
 		es.Workflow,
+		sqlNullString(es.EventContext),
 		sqlNullString(es.Context),
 	)
 	return err

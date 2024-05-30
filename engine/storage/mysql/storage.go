@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/micromdm/nanocmd/engine/storage"
@@ -240,4 +241,54 @@ func (s *MySQLStorage) CancelSteps(ctx context.Context, id, workflowName string)
 		}
 		return nil
 	})
+}
+
+// RetrieveWorkflowStarted returns the last time a workflow was started for id.
+func (s *MySQLStorage) RetrieveWorkflowStarted(ctx context.Context, id, workflowName string) (time.Time, error) {
+	ret, err := s.q.GetWorkflowLastStarted(ctx, sqlc.GetWorkflowLastStartedParams{EnrollmentID: id, WorkflowName: workflowName})
+	if err != nil {
+		return time.Time{}, err
+	}
+	parsedTime, err := time.Parse(mySQLTimestampFormat, ret)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("parsing time: %w", err)
+	}
+	return parsedTime, err
+}
+
+// RecordWorkflowStarted stores the started time for workflowName for ids.
+func (s *MySQLStorage) RecordWorkflowStarted(ctx context.Context, ids []string, workflowName string, started time.Time) error {
+	if len(ids) < 1 {
+		return errors.New("no id(s) provided")
+	}
+	const numFields = 3
+	const subst = ", (?, ?, ?)"
+	fmt.Println(len(ids), len(ids)-1)
+	parms := make([]interface{}, len(ids)*numFields)
+	startedFormat := started.Format(mySQLTimestampFormat)
+	for i, id := range ids {
+		// these must match the SQL query, below
+		parms[i*numFields] = id
+		parms[i*numFields+1] = workflowName
+		parms[i*numFields+2] = startedFormat
+	}
+	val := subst[2:] + strings.Repeat(subst, len(ids)-1)
+	_, err := s.db.ExecContext(
+		ctx,
+		`
+INSERT INTO wf_status
+  (enrollment_id, workflow_name, last_created_at)
+VALUES
+  `+val+` AS new
+ON DUPLICATE KEY
+UPDATE
+  last_created_at = new.last_created_at;`,
+		parms...,
+	)
+	return err
+}
+
+// ClearWorkflowStatus removes all workflow start times for id.
+func (s *MySQLStorage) ClearWorkflowStatus(ctx context.Context, id string) error {
+	return s.q.ClearWorkflowStatus(ctx, id)
 }

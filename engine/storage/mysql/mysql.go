@@ -11,6 +11,8 @@ import (
 	"github.com/micromdm/nanocmd/engine/storage/mysql/sqlc"
 )
 
+const mySQLTimestampFormat = "2006-01-02 15:04:05"
+
 // MySQLStorage implements a storage.AllStorage using MySQL.
 type MySQLStorage struct {
 	db *sql.DB

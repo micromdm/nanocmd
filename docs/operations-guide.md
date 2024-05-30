@@ -153,7 +153,8 @@ Configures Event Subscriptions. Event Subscriptions start workflows for MDM even
 {
   "event": "Enrollment",
   "workflow": "io.micromdm.wf.example.v1",
-  "context": "string"
+  "context": "string",
+  "event_context": "string"
 }
 ```
 
@@ -164,8 +165,11 @@ The JSON keys are as follows:
   * `TokenUpdate`: when an enrollment sends a TokenUpdate MDM check-in message.
   * `Enrollment`: when an enrollment enrolls; i.e. the first TokenUpdate message.
   * `CheckOut`: when a device sends a CheckOut MDM check-in message.
+  * `Idle`: when an enrollment sends an Idle command response.
+  * `IdleNotStartedSince`: when an enrollment sends an Idle message and the associated workflow has not been started in the given number of seconds. The seconds are provided in the `event_context` string.
 * `workflow`: the name of the workflow.
 * `context`: optional context to give to the workflow when it starts.
+* `event_context`: optional context to give to the event.
 
 #### FileVault profile template endpoint
 

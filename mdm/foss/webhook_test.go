@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/micromdm/nanocmd/log"
 	"github.com/micromdm/nanocmd/mdm"
@@ -30,6 +31,16 @@ func (r *eventRecorder) MDMCommandResponseEvent(ctx context.Context, id string, 
 		resp: true,
 		id:   id,
 		uuid: uuid,
+		raw:  raw,
+		ctx:  mdmContext,
+	})
+	return nil
+}
+
+func (r *eventRecorder) MDMIdleEvent(ctx context.Context, id string, raw []byte, mdmContext *workflow.MDMContext, _ time.Time) error {
+	r.events = append(r.events, event{
+		resp: true,
+		id:   id,
 		raw:  raw,
 		ctx:  mdmContext,
 	})
