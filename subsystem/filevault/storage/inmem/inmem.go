@@ -6,7 +6,8 @@ import (
 
 	"github.com/micromdm/nanocmd/subsystem/filevault/storage"
 	"github.com/micromdm/nanocmd/subsystem/filevault/storage/kv"
-	"github.com/micromdm/nanocmd/utils/kv/kvmap"
+
+	"github.com/micromdm/nanolib/storage/kv/kvmap"
 )
 
 // InMem implements an in-memory FileVault storage backend.
@@ -15,6 +16,6 @@ type InMem struct {
 }
 
 func New(p storage.PRKStorage) (*InMem, error) {
-	kvStore, err := kv.New(context.Background(), kvmap.NewBucket(), p)
+	kvStore, err := kv.New(context.Background(), kvmap.New(), p)
 	return &InMem{KV: kvStore}, err
 }

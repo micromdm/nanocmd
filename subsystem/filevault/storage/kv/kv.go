@@ -9,7 +9,8 @@ import (
 
 	"github.com/micromdm/nanocmd/subsystem/filevault/storage"
 	"github.com/micromdm/nanocmd/utils/cryptoutil"
-	"github.com/micromdm/nanocmd/utils/kv"
+
+	"github.com/micromdm/nanolib/storage/kv"
 	"github.com/smallstep/pkcs7"
 )
 

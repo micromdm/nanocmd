@@ -3,8 +3,9 @@ package inmem
 
 import (
 	"github.com/micromdm/nanocmd/engine/storage/kv"
-	"github.com/micromdm/nanocmd/utils/kv/kvmap"
 	"github.com/micromdm/nanocmd/utils/uuid"
+
+	"github.com/micromdm/nanolib/storage/kv/kvmap"
 )
 
 // InMem is an in-memory engine storage backend.
@@ -14,10 +15,10 @@ type InMem struct {
 
 func New() *InMem {
 	return &InMem{KV: kv.New(
-		kvmap.NewBucket(),
-		kvmap.NewBucket(),
-		kvmap.NewBucket(),
+		kvmap.New(),
+		kvmap.New(),
+		kvmap.New(),
 		uuid.NewUUID(),
-		kvmap.NewBucket(),
+		kvmap.New(),
 	)}
 }

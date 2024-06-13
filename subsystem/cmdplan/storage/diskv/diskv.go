@@ -5,7 +5,8 @@ import (
 	"path/filepath"
 
 	"github.com/micromdm/nanocmd/subsystem/cmdplan/storage/kv"
-	"github.com/micromdm/nanocmd/utils/kv/kvdiskv"
+
+	"github.com/micromdm/nanolib/storage/kv/kvdiskv"
 	"github.com/peterbourgon/diskv/v3"
 )
 
@@ -18,7 +19,7 @@ type Diskv struct {
 func New(path string) *Diskv {
 	flatTransform := func(s string) []string { return []string{} }
 	return &Diskv{
-		KV: kv.New(kvdiskv.NewBucket(diskv.New(diskv.Options{
+		KV: kv.New(kvdiskv.New(diskv.New(diskv.Options{
 			BasePath:     filepath.Join(path, "cmdplan"),
 			Transform:    flatTransform,
 			CacheSizeMax: 1024 * 1024,
