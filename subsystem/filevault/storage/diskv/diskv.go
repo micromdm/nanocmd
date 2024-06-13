@@ -7,7 +7,8 @@ import (
 
 	"github.com/micromdm/nanocmd/subsystem/filevault/storage"
 	"github.com/micromdm/nanocmd/subsystem/filevault/storage/kv"
-	"github.com/micromdm/nanocmd/utils/kv/kvdiskv"
+
+	"github.com/micromdm/nanolib/storage/kv/kvdiskv"
 	"github.com/peterbourgon/diskv/v3"
 )
 
@@ -20,7 +21,7 @@ func New(path string, p storage.PRKStorage) (*Diskv, error) {
 	flatTransform := func(s string) []string { return []string{} }
 	kvStore, err := kv.New(
 		context.Background(),
-		kvdiskv.NewBucket(diskv.New(diskv.Options{
+		kvdiskv.New(diskv.New(diskv.Options{
 			BasePath:     filepath.Join(path, "fvkey"),
 			Transform:    flatTransform,
 			CacheSizeMax: 1024 * 1024,

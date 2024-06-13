@@ -10,22 +10,23 @@ import (
 	"time"
 
 	"github.com/micromdm/nanocmd/engine/storage"
-	"github.com/micromdm/nanocmd/utils/kv"
 	"github.com/micromdm/nanocmd/utils/uuid"
+
+	"github.com/micromdm/nanolib/storage/kv"
 )
 
 // KV is a workflow engine storage backend using a key-value interface.
 type KV struct {
 	mu          sync.RWMutex
-	stepStore   kv.TraversingBucket
-	idCmdStore  kv.TraversingBucket
-	eventStore  kv.TraversingBucket
+	stepStore   kv.KeysPrefixTraversingBucket
+	idCmdStore  kv.KeysPrefixTraversingBucket
+	eventStore  kv.KeysPrefixTraversingBucket
 	ider        uuid.IDer
-	statusStore kv.TraversingBucket
+	statusStore kv.KeysPrefixTraversingBucket
 }
 
 // New creates a new key-value workflow engine storage backend.
-func New(stepStore kv.TraversingBucket, idCmdStore kv.TraversingBucket, eventStore kv.TraversingBucket, ider uuid.IDer, statusStore kv.TraversingBucket) *KV {
+func New(stepStore kv.KeysPrefixTraversingBucket, idCmdStore kv.KeysPrefixTraversingBucket, eventStore kv.KeysPrefixTraversingBucket, ider uuid.IDer, statusStore kv.KeysPrefixTraversingBucket) *KV {
 	return &KV{
 		stepStore:   stepStore,
 		idCmdStore:  idCmdStore,
@@ -324,7 +325,7 @@ func (s *KV) RecordWorkflowStarted(ctx context.Context, ids []string, workflowNa
 // ClearWorkflowStatus removes all workflow start times for id.
 func (s *KV) ClearWorkflowStatus(ctx context.Context, id string) error {
 	var toDelete []string
-	for k := range s.statusStore.Keys(nil) {
+	for k := range s.statusStore.Keys(ctx, nil) {
 		// very inefficient! this could be a large table
 		if strings.HasPrefix(k, id+".") {
 			toDelete = append(toDelete, k)

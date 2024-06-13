@@ -8,7 +8,8 @@ import (
 	"time"
 
 	"github.com/micromdm/nanocmd/engine/storage"
-	"github.com/micromdm/nanocmd/utils/kv"
+
+	"github.com/micromdm/nanolib/storage/kv"
 )
 
 const (
@@ -257,13 +258,13 @@ func kvDeleteStepNotUntil(ctx context.Context, b kv.Bucket, stepID string) error
 }
 
 // kvFindWorkflowStepsWithIDs finds specific workflow steps (step IDs) for specific enrollment IDs.
-func kvFindWorkflowStepsWithIDs(ctx context.Context, b kv.TraversingBucket, name string, ids []string) ([]string, error) {
+func kvFindWorkflowStepsWithIDs(ctx context.Context, b kv.KeysPrefixTraversingBucket, name string, ids []string) ([]string, error) {
 	var stepIDs []string
 
 	// this.. is not very efficient. perhaps it would be better to
 	// make a specific bucket/index for this.
 start:
-	for k := range b.Keys(nil) {
+	for k := range b.Keys(ctx, nil) {
 		if !strings.HasSuffix(k, keySfxStepMeta) {
 			continue
 		}

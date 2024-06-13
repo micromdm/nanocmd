@@ -8,8 +8,9 @@ import (
 	"strings"
 
 	"github.com/micromdm/nanocmd/engine/storage"
-	"github.com/micromdm/nanocmd/utils/kv"
 	"github.com/micromdm/nanocmd/workflow"
+
+	"github.com/micromdm/nanolib/storage/kv"
 )
 
 const (
@@ -100,12 +101,12 @@ func (s *KV) RetrieveEventSubscriptions(ctx context.Context, names []string) (ma
 	return ret, nil
 }
 
-func kvFindEventSubNamesByEvent(ctx context.Context, b kv.TraversingBucket, f workflow.EventFlag) ([]string, error) {
+func kvFindEventSubNamesByEvent(ctx context.Context, b kv.KeysPrefixTraversingBucket, f workflow.EventFlag) ([]string, error) {
 	var names []string
 
 	// this.. is not very efficient. perhaps it would be better to
 	// make a specific bucket/index for this.
-	for k := range b.Keys(nil) {
+	for k := range b.Keys(ctx, nil) {
 		if !strings.HasSuffix(k, keySfxEventFlag) {
 			continue
 		}

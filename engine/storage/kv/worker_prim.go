@@ -8,17 +8,18 @@ import (
 	"time"
 
 	"github.com/micromdm/nanocmd/engine/storage"
-	"github.com/micromdm/nanocmd/utils/kv"
+
+	"github.com/micromdm/nanolib/storage/kv"
 )
 
-func kvFindNotUntilStepsWithIDs(ctx context.Context, b kv.TraversingBucket) ([]string, error) {
+func kvFindNotUntilStepsWithIDs(ctx context.Context, b kv.KeysPrefixTraversingBucket) ([]string, error) {
 	var stepIDs []string
 
 	now := time.Now()
 
 	// this.. is not very efficient. perhaps it would be better to
 	// make a specific bucket/index for this.
-	for k := range b.Keys(nil) {
+	for k := range b.Keys(ctx, nil) {
 		if !strings.HasSuffix(k, keySfxStepNotUntil) {
 			continue
 		}
@@ -104,14 +105,14 @@ func kvGetIDCmdRaw(ctx context.Context, b kv.Bucket, id, cmdUUID string) (*stora
 	}, nil
 }
 
-func kvFindTimedOutStepIDs(ctx context.Context, b kv.TraversingBucket) ([]string, error) {
+func kvFindTimedOutStepIDs(ctx context.Context, b kv.KeysPrefixTraversingBucket) ([]string, error) {
 	var stepIDs []string
 
 	now := time.Now()
 
 	// this.. is not very efficient. perhaps it would be better to
 	// make a specific bucket/index for this.
-	for k := range b.Keys(nil) {
+	for k := range b.Keys(ctx, nil) {
 		if !strings.HasSuffix(k, keySfxStepTimeout) {
 			continue
 		}
@@ -167,14 +168,14 @@ func kvGetIDCmdStepResult(ctx context.Context, b kv.Bucket, id, cmdUUID string, 
 	return result, err
 }
 
-func kvFindCommandsToRePush(ctx context.Context, b kv.TraversingBucket, ifBefore time.Time, setTo time.Time) ([]string, error) {
+func kvFindCommandsToRePush(ctx context.Context, b kv.KeysPrefixTraversingBucket, ifBefore time.Time, setTo time.Time) ([]string, error) {
 	var ids []string
 
 	resetLastPushes := make(map[string][]byte)
 
 	// this.. is not very efficient. perhaps it would be better to
 	// make a specific bucket/index for this.
-	for k := range b.Keys(nil) {
+	for k := range b.Keys(ctx, nil) {
 		if !strings.HasSuffix(k, keySfxCmdLastPush) {
 			continue
 		}

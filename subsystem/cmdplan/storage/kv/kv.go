@@ -7,7 +7,8 @@ import (
 	"sync"
 
 	"github.com/micromdm/nanocmd/subsystem/cmdplan/storage"
-	"github.com/micromdm/nanocmd/utils/kv"
+
+	"github.com/micromdm/nanolib/storage/kv"
 )
 
 // KV is a cmdplan storage backend using JSON with key-value storage.
