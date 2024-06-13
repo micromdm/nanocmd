@@ -8,15 +8,16 @@ import (
 	"os"
 	"strings"
 
-	"github.com/jessepeterson/mdmcommands"
-	"github.com/micromdm/nanocmd/log"
-	"github.com/micromdm/nanocmd/log/ctxlog"
-	"github.com/micromdm/nanocmd/log/logkeys"
+	"github.com/micromdm/nanocmd/logkeys"
 	"github.com/micromdm/nanocmd/mdm"
 	"github.com/micromdm/nanocmd/subsystem/cmdplan/storage"
 	profstorage "github.com/micromdm/nanocmd/subsystem/profile/storage"
 	"github.com/micromdm/nanocmd/utils/uuid"
 	"github.com/micromdm/nanocmd/workflow"
+
+	"github.com/jessepeterson/mdmcommands"
+	"github.com/micromdm/nanolib/log"
+	"github.com/micromdm/nanolib/log/ctxlog"
 )
 
 const WorkflowName = "io.micromdm.wf.cmdplan.v1"

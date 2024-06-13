@@ -7,13 +7,14 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/jessepeterson/mdmcommands"
-	"github.com/micromdm/nanocmd/log"
-	"github.com/micromdm/nanocmd/log/ctxlog"
-	"github.com/micromdm/nanocmd/log/logkeys"
+	"github.com/micromdm/nanocmd/logkeys"
 	"github.com/micromdm/nanocmd/subsystem/inventory/storage"
 	"github.com/micromdm/nanocmd/utils/uuid"
 	"github.com/micromdm/nanocmd/workflow"
+
+	"github.com/jessepeterson/mdmcommands"
+	"github.com/micromdm/nanolib/log"
+	"github.com/micromdm/nanolib/log/ctxlog"
 )
 
 const WorkflowName = "io.micromdm.wf.lock.v1"

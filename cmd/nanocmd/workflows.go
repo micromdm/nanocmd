@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 
-	"github.com/micromdm/nanocmd/log"
 	"github.com/micromdm/nanocmd/workflow"
 	"github.com/micromdm/nanocmd/workflow/cmdplan"
 	"github.com/micromdm/nanocmd/workflow/fvenable"
@@ -11,6 +10,8 @@ import (
 	"github.com/micromdm/nanocmd/workflow/inventory"
 	"github.com/micromdm/nanocmd/workflow/lock"
 	"github.com/micromdm/nanocmd/workflow/profile"
+
+	"github.com/micromdm/nanolib/log"
 )
 
 type registerer interface {

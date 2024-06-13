@@ -8,9 +8,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/micromdm/nanocmd/log"
 	"github.com/micromdm/nanocmd/mdm"
 	"github.com/micromdm/nanocmd/workflow"
+
+	"github.com/micromdm/nanolib/log"
 )
 
 type event struct {
