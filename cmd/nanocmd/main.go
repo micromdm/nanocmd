@@ -15,9 +15,9 @@ import (
 	httpcwe "github.com/micromdm/nanocmd/http"
 	"github.com/micromdm/nanocmd/logkeys"
 	"github.com/micromdm/nanocmd/mdm/foss"
-	"github.com/micromdm/nanolib/log/stdlogfmt"
 
 	"github.com/alexedwards/flow"
+	"github.com/micromdm/nanolib/log/stdlogfmt"
 )
 
 // overridden by -ldflags -X
