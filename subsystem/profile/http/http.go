@@ -7,13 +7,14 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/alexedwards/flow"
 	"github.com/micromdm/nanocmd/http/api"
-	"github.com/micromdm/nanocmd/log"
-	"github.com/micromdm/nanocmd/log/ctxlog"
-	"github.com/micromdm/nanocmd/log/logkeys"
+	"github.com/micromdm/nanocmd/logkeys"
 	"github.com/micromdm/nanocmd/subsystem/profile/storage"
 	"github.com/micromdm/nanocmd/utils/mobileconfig"
+
+	"github.com/alexedwards/flow"
+	"github.com/micromdm/nanolib/log"
+	"github.com/micromdm/nanolib/log/ctxlog"
 )
 
 // GetProfilesHandler returns an HTTP handler that returns profile metadata for all profile names.

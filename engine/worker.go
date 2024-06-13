@@ -6,9 +6,10 @@ import (
 	"time"
 
 	"github.com/micromdm/nanocmd/engine/storage"
-	"github.com/micromdm/nanocmd/log"
-	"github.com/micromdm/nanocmd/log/logkeys"
+	"github.com/micromdm/nanocmd/logkeys"
 	"github.com/micromdm/nanocmd/workflow"
+
+	"github.com/micromdm/nanolib/log"
 )
 
 const DefaultDuration = time.Minute * 5

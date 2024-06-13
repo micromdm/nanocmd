@@ -13,9 +13,9 @@ import (
 
 	"github.com/micromdm/nanocmd/engine"
 	httpcwe "github.com/micromdm/nanocmd/http"
-	"github.com/micromdm/nanocmd/log/logkeys"
-	"github.com/micromdm/nanocmd/log/stdlogfmt"
+	"github.com/micromdm/nanocmd/logkeys"
 	"github.com/micromdm/nanocmd/mdm/foss"
+	"github.com/micromdm/nanolib/log/stdlogfmt"
 
 	"github.com/alexedwards/flow"
 )

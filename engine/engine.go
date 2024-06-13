@@ -10,12 +10,13 @@ import (
 	"time"
 
 	"github.com/micromdm/nanocmd/engine/storage"
-	"github.com/micromdm/nanocmd/log"
-	"github.com/micromdm/nanocmd/log/ctxlog"
-	"github.com/micromdm/nanocmd/log/logkeys"
+	"github.com/micromdm/nanocmd/logkeys"
 	"github.com/micromdm/nanocmd/mdm"
 	"github.com/micromdm/nanocmd/utils/uuid"
 	"github.com/micromdm/nanocmd/workflow"
+
+	"github.com/micromdm/nanolib/log"
+	"github.com/micromdm/nanolib/log/ctxlog"
 )
 
 var (

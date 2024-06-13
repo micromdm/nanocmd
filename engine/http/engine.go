@@ -7,12 +7,13 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/alexedwards/flow"
 	"github.com/micromdm/nanocmd/http/api"
-	"github.com/micromdm/nanocmd/log"
-	"github.com/micromdm/nanocmd/log/ctxlog"
-	"github.com/micromdm/nanocmd/log/logkeys"
+	"github.com/micromdm/nanocmd/logkeys"
 	"github.com/micromdm/nanocmd/workflow"
+
+	"github.com/alexedwards/flow"
+	"github.com/micromdm/nanolib/log"
+	"github.com/micromdm/nanolib/log/ctxlog"
 )
 
 var (

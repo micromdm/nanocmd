@@ -10,9 +10,10 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/micromdm/nanocmd/log"
-	"github.com/micromdm/nanocmd/log/ctxlog"
-	"github.com/micromdm/nanocmd/log/logkeys"
+	"github.com/micromdm/nanocmd/logkeys"
+
+	"github.com/micromdm/nanolib/log"
+	"github.com/micromdm/nanolib/log/ctxlog"
 )
 
 var ErrNoIDsInIDChunk = errors.New("no ids in id chunk")
