@@ -57,6 +57,6 @@ func TestStorage(t *testing.T, newStorage func() storage.Storage) {
 
 	_, ok = idVals[id]
 	if ok {
-		t.Error("expected id to missing in id values map")
+		t.Error("expected id to be missing in id values map")
 	}
 }
