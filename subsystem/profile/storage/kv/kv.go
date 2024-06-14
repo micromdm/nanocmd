@@ -1,4 +1,4 @@
-// Package kv implements a profile storage backend using key-value storage.
+// Package kv implements a profile storage backend using a key-value store.
 package kv
 
 import (
@@ -17,7 +17,7 @@ const (
 	keyPfxRaw  = "raw."
 )
 
-// KV is a profile storage backend using key-value storage.
+// KV is a profile storage backend using a key-value store.
 type KV struct {
 	b kv.KeysPrefixTraversingBucket
 }
