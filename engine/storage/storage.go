@@ -143,6 +143,7 @@ type StepResult struct {
 
 type WorkflowStatusStorage interface {
 	// RetrieveWorkflowStarted returns the last time a workflow was started for id.
+	// Returned time should be nil with no error if workflowName has not yet been started for id.
 	RetrieveWorkflowStarted(ctx context.Context, id, workflowName string) (time.Time, error)
 
 	// RecordWorkflowStarted stores the started time for workflowName for ids.

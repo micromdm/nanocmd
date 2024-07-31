@@ -42,6 +42,12 @@ func TestEngineStorage(t *testing.T, newStorage func() storage.AllStorage) {
 	t.Run("testEvent", func(t *testing.T) {
 		TestEventStorage(t, s)
 	})
+
+	ctx := context.Background()
+
+	t.Run("testEventStatus", func(t *testing.T) {
+		TestEventStatusStorage(t, ctx, s)
+	})
 }
 
 func mainTest(t *testing.T, s storage.AllStorage) {
