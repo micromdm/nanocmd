@@ -8,6 +8,14 @@ import (
 	"github.com/micromdm/nanocmd/workflow"
 )
 
+func TestEventStatusStorage(t *testing.T, ctx context.Context, store storage.WorkflowStatusStorage) {
+	_, err := store.RetrieveWorkflowStarted(ctx, "id.should.not.exist", "wfname.whaa")
+	if err != nil {
+		// should not error for a non-found item
+		t.Fatal(err)
+	}
+}
+
 func TestEventStorage(t *testing.T, store storage.EventSubscriptionStorage) {
 	ctx := context.Background()
 

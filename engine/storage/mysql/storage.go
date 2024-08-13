@@ -246,7 +246,9 @@ func (s *MySQLStorage) CancelSteps(ctx context.Context, id, workflowName string)
 // RetrieveWorkflowStarted returns the last time a workflow was started for id.
 func (s *MySQLStorage) RetrieveWorkflowStarted(ctx context.Context, id, workflowName string) (time.Time, error) {
 	ret, err := s.q.GetWorkflowLastStarted(ctx, sqlc.GetWorkflowLastStartedParams{EnrollmentID: id, WorkflowName: workflowName})
-	if err != nil {
+	if errors.Is(err, sql.ErrNoRows) {
+		return time.Time{}, nil
+	} else if err != nil {
 		return time.Time{}, err
 	}
 	parsedTime, err := time.Parse(mySQLTimestampFormat, ret)
