@@ -188,7 +188,7 @@ func (e *Engine) StartWorkflow(ctx context.Context, name string, context []byte,
 			return instanceID, fmt.Errorf("converting step start: %w", err)
 		}
 		if err = w.Start(ctx, ss); err != nil {
-			return instanceID, fmt.Errorf("staring workflow: %w", err)
+			return instanceID, fmt.Errorf("starting workflow: %w", err)
 		}
 		if err = e.storage.RecordWorkflowStarted(ctx, startID, name, time.Now()); err != nil {
 			return instanceID, fmt.Errorf("recording workflow status: %w", err)
