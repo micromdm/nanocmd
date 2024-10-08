@@ -1,6 +1,6 @@
 # NanoCMD
 
-[![Go](https://github.com/micromdm/nanocmd/workflows/Go/badge.svg)](https://github.com/micromdm/nanocmd/actions)
+[![CI/CD](https://github.com/micromdm/nanocmd/workflows/CI%2FCD/badge.svg)](https://github.com/micromdm/nanocmd/actions)
 
 NanoCMD is a modular Go library and reference server for abstracting Apple MDM commands and responses into a concept of workflows.
 
