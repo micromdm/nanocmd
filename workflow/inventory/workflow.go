@@ -7,10 +7,11 @@ import (
 	"time"
 
 	"github.com/jessepeterson/mdmcommands"
-	"github.com/micromdm/nanocmd/log"
 	"github.com/micromdm/nanocmd/subsystem/inventory/storage"
 	"github.com/micromdm/nanocmd/utils/uuid"
 	"github.com/micromdm/nanocmd/workflow"
+
+	"github.com/micromdm/nanolib/log"
 )
 
 const WorkflowName = "io.micromdm.wf.inventory.v1"
