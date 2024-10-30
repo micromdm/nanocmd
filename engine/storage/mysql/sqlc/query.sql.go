@@ -376,7 +376,7 @@ func (q *Queries) GetStepByID(ctx context.Context, id int64) (GetStepByIDRow, er
 
 const getWorkflowLastStarted = `-- name: GetWorkflowLastStarted :one
 SELECT
-  last_created_at
+  CONCAT(CONVERT_TZ(last_created_at, @@session.time_zone, '+00:00')) AS last_created_at_utc
 FROM
   wf_status
 WHERE
@@ -389,11 +389,14 @@ type GetWorkflowLastStartedParams struct {
 	WorkflowName string
 }
 
+// Note we add a CONCAT() to the dynamic column to trick sqlc into treating
+// this CONVERT_TZ() column as a string instead of a time.Time{} column.
+// See sqlc-dev/sqlc#2800 for "type annotations" as a future path forward.
 func (q *Queries) GetWorkflowLastStarted(ctx context.Context, arg GetWorkflowLastStartedParams) (string, error) {
 	row := q.db.QueryRowContext(ctx, getWorkflowLastStarted, arg.EnrollmentID, arg.WorkflowName)
-	var last_created_at string
-	err := row.Scan(&last_created_at)
-	return last_created_at, err
+	var last_created_at_utc string
+	err := row.Scan(&last_created_at_utc)
+	return last_created_at_utc, err
 }
 
 const removeIDCommandsByStepID = `-- name: RemoveIDCommandsByStepID :exec

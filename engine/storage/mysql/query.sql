@@ -154,8 +154,11 @@ WHERE
   s.workflow_name = ?;
 
 -- name: GetWorkflowLastStarted :one
+-- Note we add a CONCAT() to the dynamic column to trick sqlc into treating
+-- this CONVERT_TZ() column as a string instead of a time.Time{} column.
+-- See sqlc-dev/sqlc#2800 for "type annotations" as a future path forward.
 SELECT
-  last_created_at
+  CONCAT(CONVERT_TZ(last_created_at, @@session.time_zone, '+00:00')) AS last_created_at_utc
 FROM
   wf_status
 WHERE

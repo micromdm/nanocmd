@@ -87,6 +87,17 @@ func sqlNullTime(t time.Time) sql.NullTime {
 	return sql.NullTime{Valid: !t.IsZero(), Time: t}
 }
 
+// fromSQLTimestamp converts a TIMESTAMP column ts to a Go time.
+// The timestamp is assumed to be UTC.
+func fromSQLTimestamp(ts string) (time.Time, error) {
+	return time.Parse(mySQLTimestampFormat, ts)
+}
+
+// toSQLTimestamp returns a string representation of t in UTC.
+func toSQLTimestamp(t time.Time) string {
+	return t.UTC().Format(mySQLTimestampFormat)
+}
+
 // txcb executes SQL within transactions when wrapped in tx().
 type txcb func(ctx context.Context, tx *sql.Tx, qtx *sqlc.Queries) error
 

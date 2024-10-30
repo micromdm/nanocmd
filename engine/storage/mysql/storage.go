@@ -244,6 +244,7 @@ func (s *MySQLStorage) CancelSteps(ctx context.Context, id, workflowName string)
 }
 
 // RetrieveWorkflowStarted returns the last time a workflow was started for id.
+// Time returned will be UTC from a MySQL TIMESTAMP column.
 func (s *MySQLStorage) RetrieveWorkflowStarted(ctx context.Context, id, workflowName string) (time.Time, error) {
 	ret, err := s.q.GetWorkflowLastStarted(ctx, sqlc.GetWorkflowLastStartedParams{EnrollmentID: id, WorkflowName: workflowName})
 	if errors.Is(err, sql.ErrNoRows) {
@@ -251,11 +252,7 @@ func (s *MySQLStorage) RetrieveWorkflowStarted(ctx context.Context, id, workflow
 	} else if err != nil {
 		return time.Time{}, err
 	}
-	parsedTime, err := time.Parse(mySQLTimestampFormat, ret)
-	if err != nil {
-		return time.Time{}, fmt.Errorf("parsing time: %w", err)
-	}
-	return parsedTime, err
+	return fromSQLTimestamp(ret)
 }
 
 // RecordWorkflowStarted stores the started time for workflowName for ids.
@@ -264,10 +261,9 @@ func (s *MySQLStorage) RecordWorkflowStarted(ctx context.Context, ids []string, 
 		return errors.New("no id(s) provided")
 	}
 	const numFields = 3
-	const subst = ", (?, ?, ?)"
-	fmt.Println(len(ids), len(ids)-1)
+	const subst = ", (?, ?, CONVERT_TZ(?, '+00:00', @@session.time_zone))"
 	parms := make([]interface{}, len(ids)*numFields)
-	startedFormat := started.Format(mySQLTimestampFormat)
+	startedFormat := toSQLTimestamp(started)
 	for i, id := range ids {
 		// these must match the SQL query, below
 		parms[i*numFields] = id

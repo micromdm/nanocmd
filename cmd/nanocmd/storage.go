@@ -1,7 +1,9 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"strings"
 
 	storageeng "github.com/micromdm/nanocmd/engine/storage"
 	storageengdiskv "github.com/micromdm/nanocmd/engine/storage/diskv"
@@ -69,6 +71,9 @@ func parseStorage(name, dsn string) (*storageConfig, error) {
 			filevault: fv,
 		}, nil
 	case "mysql":
+		if strings.Contains(dsn, "parseTime=true") {
+			return nil, errors.New("parseTime=true unsupported")
+		}
 		inv := storageinvinmem.New()
 		fv, err := storagefvinmem.New(storagefvinvprk.NewInvPRK(inv))
 		if err != nil {
