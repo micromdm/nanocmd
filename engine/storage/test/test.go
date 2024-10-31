@@ -273,11 +273,7 @@ func mainTest(t *testing.T, s storage.AllStorage) {
 			// 	t.Fatalf("invalid test data: step enqueueing with config: %v", err)
 			// }
 
-			// some backends may truncate the time and drop TZ
-			// so let's truncate ourselves and eliminate the TZ.
-			// since this value is used to compare the retrived value
-			// we'll stick with that.
-			storedAt := time.Now().UTC().Truncate(time.Second)
+			storedAt := time.Now().UTC()
 
 			err := s.StoreStep(ctx, tStep.step, storedAt)
 			if tStep.shouldError && err == nil {
@@ -301,8 +297,9 @@ func mainTest(t *testing.T, s storage.AllStorage) {
 					}
 					if ts.IsZero() {
 						t.Errorf("RetrieveWorkflowStarted: nil timestamp for id=%s, step=%s err=%v", id, tStep.step.WorkflowName, err)
-					} else if ts != storedAt {
-						t.Errorf("RetrieveWorkflowStarted: timestamp mismatch for id=%s, step=%s expected=%v got=%v", id, tStep.step.WorkflowName, storedAt, ts)
+					} else if t1, t2 := ts.Truncate(time.Second), storedAt.Truncate(time.Second); t1.Compare(t2) != 0 {
+						// truncate comparison in case backends don't persist precision less than 1s (e.g. SQL textual dates)
+						t.Errorf("RetrieveWorkflowStarted: timestamp mismatch for id=%s, step=%s expected=%v got=%v compare=%v", id, tStep.step.WorkflowName, t2, t1, t1.Compare(t2))
 					}
 				}
 			}
