@@ -273,7 +273,7 @@ func mainTest(t *testing.T, s storage.AllStorage) {
 			// 	t.Fatalf("invalid test data: step enqueueing with config: %v", err)
 			// }
 
-			storedAt := time.Now().UTC()
+			storedAt := time.Now()
 
 			err := s.StoreStep(ctx, tStep.step, storedAt)
 			if tStep.shouldError && err == nil {
