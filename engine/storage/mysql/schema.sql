@@ -84,7 +84,11 @@ CREATE TABLE wf_status (
     enrollment_id VARCHAR(255) NOT NULL,
     workflow_name VARCHAR(255) NOT NULL,
 
-    last_created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    -- this was intended to be "DEFAULT (UNIX_TIMESTAMP() * 1000)"
+    -- which would complement the Golang `time.Time{}.UnixMilli()`.
+    -- however sqlc seems to not support that syntax, so we'll settle
+    -- for less precision.
+    last_created_unix BIGINT NOT NULL DEFAULT (UNIX_TIMESTAMP()),
 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

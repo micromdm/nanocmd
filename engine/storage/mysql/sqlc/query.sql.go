@@ -376,7 +376,7 @@ func (q *Queries) GetStepByID(ctx context.Context, id int64) (GetStepByIDRow, er
 
 const getWorkflowLastStarted = `-- name: GetWorkflowLastStarted :one
 SELECT
-  last_created_at
+  last_created_unix
 FROM
   wf_status
 WHERE
@@ -389,11 +389,11 @@ type GetWorkflowLastStartedParams struct {
 	WorkflowName string
 }
 
-func (q *Queries) GetWorkflowLastStarted(ctx context.Context, arg GetWorkflowLastStartedParams) (string, error) {
+func (q *Queries) GetWorkflowLastStarted(ctx context.Context, arg GetWorkflowLastStartedParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, getWorkflowLastStarted, arg.EnrollmentID, arg.WorkflowName)
-	var last_created_at string
-	err := row.Scan(&last_created_at)
-	return last_created_at, err
+	var last_created_unix int64
+	err := row.Scan(&last_created_unix)
+	return last_created_unix, err
 }
 
 const removeIDCommandsByStepID = `-- name: RemoveIDCommandsByStepID :exec

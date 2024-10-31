@@ -245,17 +245,11 @@ func (s *MySQLStorage) CancelSteps(ctx context.Context, id, workflowName string)
 
 // RetrieveWorkflowStarted returns the last time a workflow was started for id.
 func (s *MySQLStorage) RetrieveWorkflowStarted(ctx context.Context, id, workflowName string) (time.Time, error) {
-	ret, err := s.q.GetWorkflowLastStarted(ctx, sqlc.GetWorkflowLastStartedParams{EnrollmentID: id, WorkflowName: workflowName})
+	epoch, err := s.q.GetWorkflowLastStarted(ctx, sqlc.GetWorkflowLastStartedParams{EnrollmentID: id, WorkflowName: workflowName})
 	if errors.Is(err, sql.ErrNoRows) {
 		return time.Time{}, nil
-	} else if err != nil {
-		return time.Time{}, err
 	}
-	parsedTime, err := time.Parse(mySQLTimestampFormat, ret)
-	if err != nil {
-		return time.Time{}, fmt.Errorf("parsing time: %w", err)
-	}
-	return parsedTime, err
+	return time.Unix(epoch, 0), err
 }
 
 // RecordWorkflowStarted stores the started time for workflowName for ids.
@@ -265,26 +259,25 @@ func (s *MySQLStorage) RecordWorkflowStarted(ctx context.Context, ids []string, 
 	}
 	const numFields = 3
 	const subst = ", (?, ?, ?)"
-	fmt.Println(len(ids), len(ids)-1)
 	parms := make([]interface{}, len(ids)*numFields)
-	startedFormat := started.Format(mySQLTimestampFormat)
+	startedUnix := started.Unix()
 	for i, id := range ids {
 		// these must match the SQL query, below
 		parms[i*numFields] = id
 		parms[i*numFields+1] = workflowName
-		parms[i*numFields+2] = startedFormat
+		parms[i*numFields+2] = startedUnix
 	}
-	val := subst[2:] + strings.Repeat(subst, len(ids)-1)
+	values := strings.Repeat(subst, len(ids))[2:]
 	_, err := s.db.ExecContext(
 		ctx,
 		`
 INSERT INTO wf_status
-  (enrollment_id, workflow_name, last_created_at)
+  (enrollment_id, workflow_name, last_created_unix)
 VALUES
-  `+val+` AS new
+  `+values+` AS new
 ON DUPLICATE KEY
 UPDATE
-  last_created_at = new.last_created_at;`,
+  last_created_unix = new.last_created_unix;`,
 		parms...,
 	)
 	return err

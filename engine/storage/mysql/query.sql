@@ -155,7 +155,7 @@ WHERE
 
 -- name: GetWorkflowLastStarted :one
 SELECT
-  last_created_at
+  last_created_unix
 FROM
   wf_status
 WHERE

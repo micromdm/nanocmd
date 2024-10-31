@@ -53,9 +53,9 @@ type WfEvent struct {
 }
 
 type WfStatus struct {
-	EnrollmentID  string
-	WorkflowName  string
-	LastCreatedAt string
-	CreatedAt     sql.NullTime
-	UpdatedAt     sql.NullTime
+	EnrollmentID    string
+	WorkflowName    string
+	LastCreatedUnix int64
+	CreatedAt       sql.NullTime
+	UpdatedAt       sql.NullTime
 }
