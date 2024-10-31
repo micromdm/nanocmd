@@ -8,7 +8,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/groob/plist v0.0.0-20220217120414-63fa881b19a5
 	github.com/jessepeterson/mdmcommands v0.0.0-20230517161100-c5ca4128e1e3
-	github.com/micromdm/nanolib v0.1.1
+	github.com/micromdm/nanolib v0.2.0
 	github.com/peterbourgon/diskv/v3 v3.0.1
 	github.com/smallstep/pkcs7 v0.0.0-20231107075624-be1870d87d13
 )
