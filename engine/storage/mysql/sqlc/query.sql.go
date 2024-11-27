@@ -396,6 +396,27 @@ func (q *Queries) GetWorkflowLastStarted(ctx context.Context, arg GetWorkflowLas
 	return last_created_unix, err
 }
 
+const lockIDCommandsByStepID = `-- name: LockIDCommandsByStepID :exec
+SELECT
+  command_uuid
+FROM
+  id_commands
+WHERE
+  enrollment_id = ? AND
+  step_id = ?
+FOR UPDATE
+`
+
+type LockIDCommandsByStepIDParams struct {
+	EnrollmentID string
+	StepID       int64
+}
+
+func (q *Queries) LockIDCommandsByStepID(ctx context.Context, arg LockIDCommandsByStepIDParams) error {
+	_, err := q.db.ExecContext(ctx, lockIDCommandsByStepID, arg.EnrollmentID, arg.StepID)
+	return err
+}
+
 const removeIDCommandsByStepID = `-- name: RemoveIDCommandsByStepID :exec
 DELETE FROM
   id_commands

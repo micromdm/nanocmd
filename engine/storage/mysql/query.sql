@@ -128,6 +128,16 @@ WHERE
   step_id = ? AND
   completed != 0;
 
+-- name: LockIDCommandsByStepID :exec
+SELECT
+  command_uuid
+FROM
+  id_commands
+WHERE
+  enrollment_id = ? AND
+  step_id = ?
+FOR UPDATE;
+
 -- name: RemoveIDCommandsByStepID :exec
 DELETE FROM
   id_commands
