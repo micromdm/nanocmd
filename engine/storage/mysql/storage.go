@@ -97,7 +97,13 @@ func (s *MySQLStorage) StoreCommandResponseAndRetrieveCompletedStep(ctx context.
 			Commands: []storage.StepCommandResult{*sc},
 		}
 
-		// TODO: select ... for update on id commands?
+		err = qtx.LockIDCommandsByStepID(ctx, sqlc.LockIDCommandsByStepIDParams{
+			EnrollmentID: id,
+			StepID:       cmdCt.StepID,
+		})
+		if err != nil {
+			return fmt.Errorf("lock commands by step by id (%d): %w", cmdCt.StepID, err)
+		}
 
 		cmdR, err := qtx.GetIDCommandsByStepID(ctx, sqlc.GetIDCommandsByStepIDParams{
 			EnrollmentID: id,
