@@ -67,6 +67,17 @@ WHERE
   c.step_id IS NULL AND
   s.workflow_name = ?;
 
+-- name: DeleteWorkflowStepHavingNoCommandsByStepID :exec
+DELETE
+  s
+FROM
+  steps s
+  LEFT JOIN id_commands c
+    ON s.id = c.step_id
+WHERE
+  c.step_id IS NULL AND
+  s.id = ?;
+
 -- name: UpdateIDCommandTimestamp :exec
 UPDATE
   id_commands
@@ -116,26 +127,21 @@ FROM
 WHERE
   id = ?;
 
--- name: GetIDCommandsByStepID :many
+-- name: GetIDCommandsByStepIDAndLock :many
 SELECT
-  command_uuid,
-  request_type,
-  result
+  ic.command_uuid,
+  ic.request_type,
+  ic.result
 FROM
-  id_commands
+  id_commands ic
+  INNER JOIN steps s
+    ON ic.step_id = s.id
+  LEFT JOIN step_commands sc
+    ON sc.step_id = s.id
 WHERE
-  enrollment_id = ? AND
-  step_id = ? AND
-  completed != 0;
-
--- name: LockIDCommandsByStepID :exec
-SELECT
-  command_uuid
-FROM
-  id_commands
-WHERE
-  enrollment_id = ? AND
-  step_id = ?
+  ic.enrollment_id = ? AND
+  s.id = ? AND
+  ic.completed != 0
 FOR UPDATE;
 
 -- name: RemoveIDCommandsByStepID :exec
