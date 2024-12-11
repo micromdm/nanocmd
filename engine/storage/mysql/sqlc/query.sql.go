@@ -239,7 +239,7 @@ func (q *Queries) DeleteWorkflowStepHavingNoCommandsByWorkflowName(ctx context.C
 	return err
 }
 
-const getIDCommandsByStepID = `-- name: GetIDCommandsByStepID :many
+const getIDCommandsByStepIDAndLock = `-- name: GetIDCommandsByStepIDAndLock :many
 SELECT
   ic.command_uuid,
   ic.request_type,
@@ -257,26 +257,26 @@ WHERE
 FOR UPDATE
 `
 
-type GetIDCommandsByStepIDParams struct {
+type GetIDCommandsByStepIDAndLockParams struct {
 	EnrollmentID string
 	ID           int64
 }
 
-type GetIDCommandsByStepIDRow struct {
+type GetIDCommandsByStepIDAndLockRow struct {
 	CommandUuid string
 	RequestType string
 	Result      []byte
 }
 
-func (q *Queries) GetIDCommandsByStepID(ctx context.Context, arg GetIDCommandsByStepIDParams) ([]GetIDCommandsByStepIDRow, error) {
-	rows, err := q.db.QueryContext(ctx, getIDCommandsByStepID, arg.EnrollmentID, arg.ID)
+func (q *Queries) GetIDCommandsByStepIDAndLock(ctx context.Context, arg GetIDCommandsByStepIDAndLockParams) ([]GetIDCommandsByStepIDAndLockRow, error) {
+	rows, err := q.db.QueryContext(ctx, getIDCommandsByStepIDAndLock, arg.EnrollmentID, arg.ID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetIDCommandsByStepIDRow
+	var items []GetIDCommandsByStepIDAndLockRow
 	for rows.Next() {
-		var i GetIDCommandsByStepIDRow
+		var i GetIDCommandsByStepIDAndLockRow
 		if err := rows.Scan(&i.CommandUuid, &i.RequestType, &i.Result); err != nil {
 			return nil, err
 		}

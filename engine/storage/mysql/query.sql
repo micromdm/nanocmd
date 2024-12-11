@@ -127,7 +127,7 @@ FROM
 WHERE
   id = ?;
 
--- name: GetIDCommandsByStepID :many
+-- name: GetIDCommandsByStepIDAndLock :many
 SELECT
   ic.command_uuid,
   ic.request_type,

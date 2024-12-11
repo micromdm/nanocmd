@@ -97,7 +97,7 @@ func (s *MySQLStorage) StoreCommandResponseAndRetrieveCompletedStep(ctx context.
 			Commands: []storage.StepCommandResult{*sc},
 		}
 
-		cmdR, err := qtx.GetIDCommandsByStepID(ctx, sqlc.GetIDCommandsByStepIDParams{
+		cmdR, err := qtx.GetIDCommandsByStepIDAndLock(ctx, sqlc.GetIDCommandsByStepIDAndLockParams{
 			EnrollmentID: id,
 			ID:           cmdCt.StepID,
 		})
