@@ -205,6 +205,23 @@ func (q *Queries) DeleteWorkflowStepHavingNoCommands(ctx context.Context) error 
 	return err
 }
 
+const deleteWorkflowStepHavingNoCommandsByStepID = `-- name: DeleteWorkflowStepHavingNoCommandsByStepID :exec
+DELETE
+  s
+FROM
+  steps s
+  LEFT JOIN id_commands c
+    ON s.id = c.step_id
+WHERE
+  c.step_id IS NULL AND
+  s.id = ?
+`
+
+func (q *Queries) DeleteWorkflowStepHavingNoCommandsByStepID(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, deleteWorkflowStepHavingNoCommandsByStepID, id)
+	return err
+}
+
 const deleteWorkflowStepHavingNoCommandsByWorkflowName = `-- name: DeleteWorkflowStepHavingNoCommandsByWorkflowName :exec
 DELETE
   s
@@ -224,20 +241,25 @@ func (q *Queries) DeleteWorkflowStepHavingNoCommandsByWorkflowName(ctx context.C
 
 const getIDCommandsByStepID = `-- name: GetIDCommandsByStepID :many
 SELECT
-  command_uuid,
-  request_type,
-  result
+  ic.command_uuid,
+  ic.request_type,
+  ic.result
 FROM
-  id_commands
+  id_commands ic
+  INNER JOIN steps s
+    ON ic.step_id = s.id
+  LEFT JOIN step_commands sc
+    ON sc.step_id = s.id
 WHERE
-  enrollment_id = ? AND
-  step_id = ? AND
-  completed != 0
+  ic.enrollment_id = ? AND
+  s.id = ? AND
+  ic.completed != 0
+FOR UPDATE
 `
 
 type GetIDCommandsByStepIDParams struct {
 	EnrollmentID string
-	StepID       int64
+	ID           int64
 }
 
 type GetIDCommandsByStepIDRow struct {
@@ -247,7 +269,7 @@ type GetIDCommandsByStepIDRow struct {
 }
 
 func (q *Queries) GetIDCommandsByStepID(ctx context.Context, arg GetIDCommandsByStepIDParams) ([]GetIDCommandsByStepIDRow, error) {
-	rows, err := q.db.QueryContext(ctx, getIDCommandsByStepID, arg.EnrollmentID, arg.StepID)
+	rows, err := q.db.QueryContext(ctx, getIDCommandsByStepID, arg.EnrollmentID, arg.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -394,27 +416,6 @@ func (q *Queries) GetWorkflowLastStarted(ctx context.Context, arg GetWorkflowLas
 	var last_created_unix int64
 	err := row.Scan(&last_created_unix)
 	return last_created_unix, err
-}
-
-const lockIDCommandsByStepID = `-- name: LockIDCommandsByStepID :exec
-SELECT
-  command_uuid
-FROM
-  id_commands
-WHERE
-  enrollment_id = ? AND
-  step_id = ?
-FOR UPDATE
-`
-
-type LockIDCommandsByStepIDParams struct {
-	EnrollmentID string
-	StepID       int64
-}
-
-func (q *Queries) LockIDCommandsByStepID(ctx context.Context, arg LockIDCommandsByStepIDParams) error {
-	_, err := q.db.ExecContext(ctx, lockIDCommandsByStepID, arg.EnrollmentID, arg.StepID)
-	return err
 }
 
 const removeIDCommandsByStepID = `-- name: RemoveIDCommandsByStepID :exec

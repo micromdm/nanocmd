@@ -97,17 +97,9 @@ func (s *MySQLStorage) StoreCommandResponseAndRetrieveCompletedStep(ctx context.
 			Commands: []storage.StepCommandResult{*sc},
 		}
 
-		err = qtx.LockIDCommandsByStepID(ctx, sqlc.LockIDCommandsByStepIDParams{
-			EnrollmentID: id,
-			StepID:       cmdCt.StepID,
-		})
-		if err != nil {
-			return fmt.Errorf("lock commands by step by id (%d): %w", cmdCt.StepID, err)
-		}
-
 		cmdR, err := qtx.GetIDCommandsByStepID(ctx, sqlc.GetIDCommandsByStepIDParams{
 			EnrollmentID: id,
-			StepID:       cmdCt.StepID,
+			ID:           cmdCt.StepID,
 		})
 		if err != nil {
 			return fmt.Errorf("get id commands by step by id (%d): %w", cmdCt.StepID, err)
@@ -130,9 +122,9 @@ func (s *MySQLStorage) StoreCommandResponseAndRetrieveCompletedStep(ctx context.
 			return fmt.Errorf("remove id commands by step by id (%d): %w", cmdCt.StepID, err)
 		}
 
-		err = qtx.DeleteWorkflowStepHavingNoCommandsByWorkflowName(ctx, sd.WorkflowName)
+		err = qtx.DeleteWorkflowStepHavingNoCommandsByStepID(ctx, cmdCt.StepID)
 		if err != nil {
-			return fmt.Errorf("delete workflow with no commands (%s): %w", sd.WorkflowName, err)
+			return fmt.Errorf("delete workflow with no commands (%d): %w", cmdCt.StepID, err)
 		}
 
 		return nil
