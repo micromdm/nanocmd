@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/groob/plist"
+	"github.com/micromdm/plist"
 	"github.com/smallstep/pkcs7"
 )
 

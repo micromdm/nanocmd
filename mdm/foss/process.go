@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/groob/plist"
 	"github.com/micromdm/nanocmd/mdm"
 	"github.com/micromdm/nanocmd/workflow"
+	"github.com/micromdm/plist"
 )
 
 type MDMCommandResponseEventer interface {

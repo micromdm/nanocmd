@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/groob/plist"
 	"github.com/jessepeterson/mdmcommands"
 	"github.com/micromdm/nanocmd/engine/storage"
 	"github.com/micromdm/nanocmd/workflow"
+	"github.com/micromdm/plist"
 )
 
 type newContextValuer interface {
