@@ -14,6 +14,7 @@ import (
 type engineLike interface {
 	enginehttp.WorkflowNameChecker
 	enginehttp.WorkflowStarter
+	enginehttp.WorkflowCanceller
 }
 
 func handlers(mux *flow.Mux, logger log.Logger, e engineLike, s *storageConfig) {
@@ -22,6 +23,12 @@ func handlers(mux *flow.Mux, logger log.Logger, e engineLike, s *storageConfig) 
 	mux.Handle(
 		"/v1/workflow/:name/start",
 		enginehttp.StartWorkflowHandler(e, logger.With("handler", "start workflow")),
+		"POST",
+	)
+
+	mux.Handle(
+		"/v1/workflow/:name/cancel",
+		enginehttp.CancelWorkflowHandler(e, logger.With("handler", "cancel workflow")),
 		"POST",
 	)
 
