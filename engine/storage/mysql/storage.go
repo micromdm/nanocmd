@@ -149,6 +149,7 @@ func (s *MySQLStorage) StoreStep(ctx context.Context, step *storage.StepEnqueuin
 			StepName:     sqlNullString(step.Name),
 			NotUntil:     sqlNullTime(step.NotUntil),
 			Timeout:      sqlNullTime(step.Timeout),
+			Context:      step.Context,
 		}
 		stepID, err := qtx.CreateStep(ctx, params)
 		if err != nil {

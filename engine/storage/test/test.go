@@ -63,6 +63,7 @@ func mainTest(t *testing.T, s storage.AllStorage) {
 		id                string // enrollment id
 		skipCmdLen        bool
 		skipByteCompare   bool
+		wfCtx             string
 	}
 
 	fakeID := "456DFB"
@@ -94,6 +95,7 @@ func mainTest(t *testing.T, s storage.AllStorage) {
 					StepContext: storage.StepContext{
 						WorkflowName: "workflow.name.test1",
 						InstanceID:   "B",
+						Context:      []byte("WFCTX-I"),
 					},
 					Commands: []storage.StepCommandRaw{
 						{
@@ -116,6 +118,7 @@ func mainTest(t *testing.T, s storage.AllStorage) {
 					shouldError:       false,
 					reqType:           "DeviceInformation",
 					id:                "AAA111",
+					wfCtx:             "WFCTX-I",
 				},
 				{
 					testName: "UUID-2-testResp1-2nd",
@@ -128,6 +131,7 @@ func mainTest(t *testing.T, s storage.AllStorage) {
 					shouldError:       false,
 					reqType:           "DeviceInformation",
 					id:                "BBB222",
+					wfCtx:             "WFCTX-I",
 				},
 				{
 					// should fail (duplicate response for same id)
@@ -334,6 +338,10 @@ func mainTest(t *testing.T, s storage.AllStorage) {
 					}
 
 					if completedStep != nil {
+						if want, have := tRespStep.wfCtx, string(completedStep.Context); want != "" && (want != have) {
+							t.Errorf("mismatch of step context; have %s, wanted %s", have, want)
+						}
+
 						if want, have := len(tStep.step.Commands), len(completedStep.Commands); !tRespStep.skipCmdLen && have != want {
 							t.Errorf("mismatch of returned commands; have %d, wanted %d", have, want)
 						}
