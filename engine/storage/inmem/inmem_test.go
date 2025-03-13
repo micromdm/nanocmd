@@ -7,6 +7,6 @@ import (
 	"github.com/micromdm/nanocmd/engine/storage/test"
 )
 
-func TestDiskvStorage(t *testing.T) {
+func TestInmemStorage(t *testing.T) {
 	test.TestEngineStorage(t, func() storage.AllStorage { return New() })
 }
