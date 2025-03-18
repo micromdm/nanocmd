@@ -3,7 +3,6 @@ package inventory
 import (
 	"context"
 	"errors"
-	"os"
 	"testing"
 
 	"github.com/micromdm/nanocmd/engine"
@@ -12,36 +11,13 @@ import (
 	"github.com/micromdm/nanocmd/subsystem/inventory/storage/inmem"
 	"github.com/micromdm/nanocmd/utils/uuid"
 	"github.com/micromdm/nanocmd/workflow"
+	"github.com/micromdm/nanocmd/workflow/test"
 )
 
-type nullEnqueuer struct{}
-
-func (n *nullEnqueuer) Enqueue(_ context.Context, _ []string, _ []byte) error { return nil }
-
-func (n *nullEnqueuer) SupportsMultiCommands() bool { return true }
-
-type testStep struct {
-	wfName string
-	es     *workflow.StepEnqueueing
-}
-
-type collectionEnqueuer struct {
-	next  workflow.StepEnqueuer
-	steps []testStep
-}
-
-func (c *collectionEnqueuer) EnqueueStep(ctx context.Context, n workflow.Namer, es *workflow.StepEnqueueing) error {
-	c.steps = append(c.steps, testStep{
-		wfName: n.Name(),
-		es:     es,
-	})
-	return c.next.EnqueueStep(ctx, n, es)
-}
-
 func TestWorkflow(t *testing.T) {
-	e := engine.New(enginestorage.New(), &nullEnqueuer{})
+	e := engine.New(enginestorage.New(), &test.NullEnqueuer{})
 
-	c := &collectionEnqueuer{next: e}
+	c := test.NewCollectingStepEnqueur(e)
 
 	s := inmem.New()
 
@@ -66,7 +42,7 @@ func TestWorkflow(t *testing.T) {
 	w2 := e.Workflow(w.Name()).(*Workflow)
 
 	if w.Name() != w2.Name() {
-		t.Fatal("workflows not equal after registration")
+		t.Fatal("workflow name not equal after registration")
 	}
 
 	_, err = e.StartWorkflow(ctx, w.Name(), nil, []string{id}, nil, nil)
@@ -74,15 +50,17 @@ func TestWorkflow(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if want, have := 1, len(c.steps); want != have {
+	steps := c.Steps()
+
+	if want, have := 1, len(steps); want != have {
 		t.Fatalf("wanted: %d; have: %d", want, have)
 	}
 
-	if want, have := 1, len(c.steps[0].es.IDs); want != have {
+	if want, have := 1, len(steps[0].StepEnqueueing.IDs); want != have {
 		t.Fatalf("wanted: %d; have: %d", want, have)
 	}
 
-	if want, have := id, c.steps[0].es.IDs[0]; want != have {
+	if want, have := id, steps[0].StepEnqueueing.IDs[0]; want != have {
 		t.Errorf("wanted: %s; have: %s", want, have)
 	}
 
@@ -98,22 +76,12 @@ func TestWorkflow(t *testing.T) {
 
 	model := "MacBookPro11,3"
 
-	devInfo, err := os.ReadFile("testdata/devinfo.plist")
+	err = test.SendCommandEvent(ctx, e, "testdata/devinfo.plist", id, "53115671-3f45-49f5-b7cb-22ede8b8afdb")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = e.MDMCommandResponseEvent(ctx, id, "53115671-3f45-49f5-b7cb-22ede8b8afdb", devInfo, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	secInfo, err := os.ReadFile("testdata/secinfo.plist")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err = e.MDMCommandResponseEvent(ctx, id, "53115671-3f45-49f5-b7cb-22ede8b8afdc", secInfo, nil)
+	err = test.SendCommandEvent(ctx, e, "testdata/secinfo.plist", id, "53115671-3f45-49f5-b7cb-22ede8b8afdc")
 	if err != nil {
 		t.Fatal(err)
 	}

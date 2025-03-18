@@ -260,6 +260,45 @@ The inventory subsystem provides storage backends for "inventory" data — that
 
 Workflows are domain-specific, contained, and encapsulated MDM command sequence senders and processors. For a higher level review of workflows check out the [README](../README.md). For more information about the internals and implementation of workflows please read [the package documentation](../workflow/doc.go).
 
+### Certificate-Profile Workflow
+
+* Workflow name: `io.micromdm.wf.certprof.v1`
+* Start value/context: JSON object, see below.
+
+The certificate-profile workflow conditionally installs configuration profiles (ostensibly certificate identity profiles) based on output from the MDM `CertificateList` profile. It does this, roughly, by doing these steps:
+
+1. Sending the MDM `CertificateList` command.
+1. Receiving the list of certificates and applying the *filter* (below) to find a single matching certificate.
+1. If a certificate is found then checking that it against *criteria* (below) to determine if it needs to be replaced (and thus, the profile being installed)
+1. If no certificiate is found then the profile proceeds to be installed.
+1. If the certificate exists and criteria is not such that it needs to be replaced, then the workflow ends before installing the profile.
+
+#### Context (input parameters)
+
+The workflow's context determines details about how the workflow runs. The four main keys are:
+
+* `name`: Profile name in the profile storage to use.
+* `criteria`: Used to determine whether to replace a found certificate.
+* `filter`: Used to find the particular certificate in the list of certificates.
+* `text_replacements`: Used to perform simple text find-and-replace on the profile before installing it.
+
+Example JSON object:
+
+```json
+{
+    "criteria": {
+        "always_replace": true
+    },
+    "filter": {
+        "cn_prefix": "kai"
+    },
+    "profile": "scep",
+    "text_replacements": {
+        "%CN%": "kai",
+        "%CHAL%": "secret"
+    }
+}```
+
 ### Command Plan Workflow
 
 * Workflow name: `io.micromdm.wf.cmdplan.v1`
