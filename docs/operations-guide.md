@@ -265,7 +265,7 @@ Workflows are domain-specific, contained, and encapsulated MDM command sequence 
 * Workflow name: `io.micromdm.wf.certprof.v1`
 * Start value/context: JSON object, see below.
 
-The certificate-profile workflow conditionally installs configuration profiles (ostensibly certificate identity profiles) based on output from the MDM `CertificateList` profile. It does this, roughly, by doing these steps:
+The certificate-profile workflow conditionally installs configuration profiles (ostensibly certificate identity profiles) based on output from the MDM `CertificateList` command. It does this, roughly, by doing these steps:
 
 1. Sending the MDM `CertificateList` command.
 1. Receiving the list of certificates and applying the *filter* (below) to find a single matching certificate.
