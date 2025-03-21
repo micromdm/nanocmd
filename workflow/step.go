@@ -54,7 +54,7 @@ type StepStart struct {
 	IDs   []string // Enrollment IDs
 }
 
-// StepEnqueueing preserves some context and IDs from step for enqueueing.
+// NewStepEnqueueing preserves some context and IDs from step for enqueueing.
 func (step *StepStart) NewStepEnqueueing() *StepEnqueueing {
 	if step == nil {
 		return nil
@@ -72,7 +72,7 @@ type StepResult struct {
 	CommandResults []interface{}
 }
 
-// StepEnqueueing preserves some context and IDs from step for enqueueing.
+// NewStepEnqueueing preserves some context and IDs from step for enqueueing.
 func (step *StepResult) NewStepEnqueueing() *StepEnqueueing {
 	if step == nil {
 		return nil

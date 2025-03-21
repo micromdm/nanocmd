@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CertificateList</key>
+	<array>
+		<dict>
+			<key>CommonName</key>
+			<string>?Error_-26276?</string>
+			<key>Data</key>
+			<data>
+			MIIDHTCCAgWgAwIBAgIBYjANBgkqhkiG9w0BAQsFADA7MQswCQYD
+			VQQGEwJVUzENMAsGA1UEChMEc2NlcDEQMA4GA1UECxMHU0NFUCBD
+			QTELMAkGA1UEAxMCY2EwHhcNMjQwNTAyMTczMzMxWhcNMzQwNDMw
+			MTc0MzMxWjAAMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKC
+			AQEAobyuGhY/h4sIntIiWuXCfiBy5Fn95mYECOhIn4qzryz1OdjS
+			p253CxaNI/3C7xB3Z2GQllmFk1J5zhma5ZT8KuBiztKBfTQ003T8
+			Xjqg8Bw5WNSNu/w12DfxwV1J1ADeg6/ZAIXoKNtQwy9FlhV4TT1M
+			xWYgHBoJq7V8pg/+MxvI0cMnKR0PLySZsxLWETJ2xhlSxakspqe2
+			IlVBQHLpqw5xR5Z2a9BfBpf/npnslGtccAnUouOLgu3nnewFzACK
+			qS27aCZ9ycYx942UtidHM/XWp80jKzUprHVw79ToCopNPnEkV+a/
+			bbu2Idrl0SbijTONj79vYPC7sWazfZPE/QIDAQABo2cwZTAOBgNV
+			HQ8BAf8EBAMCB4AwEwYDVR0lBAwwCgYIKwYBBQUHAwIwHQYDVR0O
+			BBYEFF+7Qr9PbAGxYGWOp2mbt/T6QhRqMB8GA1UdIwQYMBaAFPlN
+			RegzeawfJsKNy3xHIe46k+voMA0GCSqGSIb3DQEBCwUAA4IBAQA6
+			UryVq/ofAgrCWM2F0ccFT2goQx8WUyOo12MQgGxRjRL8d80SPU/W
+			kfyFrF4rFrIniF8haw/yz9wE7StXZTYO3TKo/SRpgnOQEkZsoTEI
+			TjAVuVO9SiTwaP22bk7Z2QsoKAsEsEoax8nkafKr0DGA72mjt0WO
+			mKDC9bo1CuOVWkscOx49VO8cM4dIKSR+HXAIGU0buQKgF++MUxCH
+			apYGXdckrpIXjeFWVTsdc0ATDGRokH5bWFnP938f++82fSyDAyhl
+			qvxR9VK+3gmMMoyn3pyLXo5lnZVz0GU/l+BM6rqayBUaEoeCbvFh
+			kVjhdXJYw6KY6ttYXuL1DVGvHo/s
+			</data>
+			<key>IsIdentity</key>
+			<true/>
+		</dict>
+	</array>
+	<key>CommandUUID</key>
+	<string>CERT-LIST-01</string>
+	<key>Status</key>
+	<string>Acknowledged</string>
+	<key>UDID</key>
+	<string>6362F867-FFF2-4EA6-905C-3C796DF4EF68</string>
+</dict>
+</plist>
+

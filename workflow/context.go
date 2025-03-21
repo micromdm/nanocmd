@@ -6,6 +6,8 @@ import (
 	"strconv"
 )
 
+var ErrInvalidContext = errors.New("invalid context")
+
 // ContextMarshaler marshals and unmarshals types to and from byte slices.
 // This encapsulates arbitrary context types to be passed around and
 // stored as binary blobs by components (that are not a workflow ) that
