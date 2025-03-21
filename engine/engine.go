@@ -22,6 +22,10 @@ import (
 var (
 	ErrNoSuchWorkflow = errors.New("no such workflow")
 	ErrNoIDs          = errors.New("no IDs")
+
+	// ErrWorkflowAlreadyStarted is when a workflow is already started
+	// that workflow is configured for exclusive running.
+	ErrWorkflowAlreadyStarted = errors.New("workflow already started")
 )
 
 func NewErrNoSuchWorkflow(name string) error {
@@ -146,10 +150,10 @@ func (e *Engine) StartWorkflow(ctx context.Context, name string, context []byte,
 			ids = diff(ids, wRunningIDs) // replace our ids with the set of NON-outstanding ids
 			if len(ids) < 1 {
 				// if all IDs are already running, then return an error
-				return "", fmt.Errorf("workflow already started on %d (of %d) ids", len(wRunningIDs), ct)
+				return "", fmt.Errorf("%w on %d (of %d) ids", ErrWorkflowAlreadyStarted, len(wRunningIDs), ct)
 			} else {
 				logger.Debug(
-					logkeys.Message, fmt.Sprintf("workflow already started on %d (of %d) ids", len(wRunningIDs), ct),
+					logkeys.Message, fmt.Sprintf("%v on %d (of %d) ids", ErrWorkflowAlreadyStarted, len(wRunningIDs), ct),
 					logkeys.GenericCount, len(ids),
 				)
 			}
