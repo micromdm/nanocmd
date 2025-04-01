@@ -277,10 +277,10 @@ The certificate-profile workflow conditionally installs configuration profiles (
 
 The workflow's context determines details about how the workflow runs. The four main keys are:
 
-* `name`: Profile name in the profile storage to use.
+* `profile`: Profile name in profile storage to install (before text replacement).
 * `criteria`: Used to determine whether to replace a found certificate.
 * `filter`: Used to find the particular certificate in the list of certificates.
-* `text_replacements`: Used to perform simple text find-and-replace on the profile before installing it.
+* `text_replacements`: Optionally used to perform simple text find-and-replace on the profile before installing it.
 
 Example JSON object:
 
@@ -297,7 +297,8 @@ Example JSON object:
         "%CN%": "kai",
         "%CHAL%": "secret"
     }
-}```
+}
+```
 
 ### Command Plan Workflow
 

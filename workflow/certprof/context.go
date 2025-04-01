@@ -16,9 +16,9 @@ type Filter struct {
 	// CNPrefix matches certificates based on the CN prefix matching this string.
 	CNPrefix string `json:"cn_prefix,omitempty"`
 
-	// NoRequireIdentity disables the requirement of the certificate
+	// AllowNonIdentity disables the requirement of the certificate
 	// to be marked as an Identity in the CertificateList response.
-	NoRequireIdentity bool `json:"require_identity,omitempty"`
+	AllowNonIdentity bool `json:"allow_non_identity,omitempty"`
 }
 
 // Criteria specifies how to check that certificate should be replaced.

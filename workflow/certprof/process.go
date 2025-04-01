@@ -63,7 +63,7 @@ func filter(f *Filter, in []mdmcommands.CertificateListItem) (out []mdmcommands.
 	}
 	for _, item := range in {
 		// skip if cert is not an identity
-		if !f.NoRequireIdentity && !item.IsIdentity {
+		if !f.AllowNonIdentity && !item.IsIdentity {
 			continue
 		}
 
