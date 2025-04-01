@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CommandUUID</key>
+	<string>D053EE3A-EE0E-4E82-87D2-BB3624186694</string>
+	<key>ErrorChain</key>
+	<array>
+		<dict>
+			<key>ErrorCode</key>
+			<integer>-909</integer>
+			<key>ErrorDomain</key>
+			<string>NSOSStatusErrorDomain</string>
+			<key>LocalizedDescription</key>
+			<string> &lt;NSOSStatusErrorDomain:-909&gt;</string>
+		</dict>
+	</array>
+	<key>Status</key>
+	<string>Error</string>
+	<key>UDID</key>
+	<string>6362F867-FFF2-4EA6-905C-3C796DF4EF68</string>
+</dict>
+</plist>

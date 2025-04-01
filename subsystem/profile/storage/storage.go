@@ -27,6 +27,14 @@ func (p *ProfileInfo) Valid() bool {
 	return true
 }
 
+type ReadRawStorage interface {
+	// RetrieveRawProfiles returns the raw profile bytes by name.
+	// Implementations should not return all profiles if no names were provided.
+	// ErrProfileNotFound is returned for any name that hasn't been stored.
+	// ErrNoNames is returned if names is empty.
+	RetrieveRawProfiles(ctx context.Context, names []string) (map[string][]byte, error)
+}
+
 type ReadStorage interface {
 	// RetrieveProfileInfos returns the profile metadata by name.
 	// Implementations have the choice to return all profile metadata if
@@ -34,11 +42,7 @@ type ReadStorage interface {
 	// any name that hasn't been stored.
 	RetrieveProfileInfos(ctx context.Context, names []string) (map[string]ProfileInfo, error)
 
-	// RetrieveRawProfiles returns the raw profile bytes by name.
-	// Implementations should not return all profiles if no names were provided.
-	// ErrProfileNotFound is returned for any name that hasn't been stored.
-	// ErrNoNames is returned if names is empty.
-	RetrieveRawProfiles(ctx context.Context, names []string) (map[string][]byte, error)
+	ReadRawStorage
 }
 
 type Storage interface {
