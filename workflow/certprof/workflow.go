@@ -13,13 +13,14 @@ import (
 )
 
 const (
-	WorkflowName = "io.micromdm.wf.certprof.v1"
+	DefaultWorkflowName = "io.micromdm.wf.certprof.v1"
 
 	stepNameProfile = "profile"
 )
 
 // Workflow is a workflow that conditionally installs profiles based on the list of certificates.
 type Workflow struct {
+	name   string
 	enq    workflow.StepEnqueuer
 	ider   uuid.IDer
 	store  storage.ReadRawStorage
@@ -36,6 +37,15 @@ func WithLogger(logger log.Logger) Option {
 	}
 }
 
+// WithName sets the workflow name. If not set a default will be used.
+// This can be useful to separate an "exclusivity domain" for the same workflow.
+func WithName(name string) Option {
+	return func(w *Workflow) error {
+		w.name = name
+		return nil
+	}
+}
+
 func New(enq workflow.StepEnqueuer, store storage.ReadRawStorage, opts ...Option) (*Workflow, error) {
 	if enq == nil {
 		panic("nil enqueuer")
@@ -44,6 +54,7 @@ func New(enq workflow.StepEnqueuer, store storage.ReadRawStorage, opts ...Option
 		panic("nil store")
 	}
 	w := &Workflow{
+		name:   DefaultWorkflowName,
 		enq:    enq,
 		ider:   uuid.NewUUID(),
 		store:  store,
@@ -57,9 +68,9 @@ func New(enq workflow.StepEnqueuer, store storage.ReadRawStorage, opts ...Option
 	return w, nil
 }
 
-// Name returns [WorkflowName].
+// Name returns the workflow name.
 func (w *Workflow) Name() string {
-	return WorkflowName
+	return w.name
 }
 
 // Config returns nil. This workflow does not specify a workflow Conifg.
