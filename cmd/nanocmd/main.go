@@ -12,11 +12,18 @@ import (
 	"time"
 
 	"github.com/micromdm/nanocmd/engine"
-	httpcwe "github.com/micromdm/nanocmd/http"
+	enginehttp "github.com/micromdm/nanocmd/engine/http"
+	httpcmd "github.com/micromdm/nanocmd/http"
 	"github.com/micromdm/nanocmd/logkeys"
 	"github.com/micromdm/nanocmd/mdm/foss"
+	cmdplanhttp "github.com/micromdm/nanocmd/subsystem/cmdplan/http"
+	fvenablehttp "github.com/micromdm/nanocmd/subsystem/filevault/http"
+	invhttp "github.com/micromdm/nanocmd/subsystem/inventory/http"
+	profhttp "github.com/micromdm/nanocmd/subsystem/profile/http"
 
 	"github.com/alexedwards/flow"
+	nanohttp "github.com/micromdm/nanolib/http"
+	"github.com/micromdm/nanolib/http/trace"
 	"github.com/micromdm/nanolib/log/stdlogfmt"
 )
 
@@ -117,7 +124,7 @@ func main() {
 
 	mux := flow.New()
 
-	mux.Handle("/version", httpcwe.VersionHandler(version))
+	mux.Handle("/version", nanohttp.NewJSONVersionHandler(version))
 
 	var eventHandler foss.MDMEventReceiver = e
 	if *flDumpWH {
@@ -125,7 +132,7 @@ func main() {
 	}
 	var h http.Handler = foss.WebhookHandler(eventHandler, logger.With("handler", "webhook"))
 	if *flDumpWH {
-		h = httpcwe.DumpHandler(h, os.Stdout)
+		h = httpcmd.DumpHandler(h, os.Stdout)
 	}
 
 	mux.Handle("/webhook", h)
@@ -133,11 +140,14 @@ func main() {
 	if *flAPIKey != "" {
 		mux.Group(func(mux *flow.Mux) {
 			mux.Use(func(h http.Handler) http.Handler {
-				return httpcwe.BasicAuthMiddleware(h, apiUsername, *flAPIKey, apiRealm)
+				return nanohttp.NewSimpleBasicAuthHandler(h, apiUsername, *flAPIKey, apiRealm)
 			})
 
-			// register all of our HTTP handlers
-			handlers(mux, logger, e, storage)
+			enginehttp.HandleAPIv1("/v1", mux, logger, e, storage.event)
+			invhttp.HandleAPIv1("/v1", mux, logger, storage.inventory)
+			profhttp.HandleAPIv1("/v1", mux, logger, storage.profile)
+			fvenablehttp.HandleAPIv1("/v1", mux)
+			cmdplanhttp.HandleAPIv1("/v1", mux, logger, storage.cmdplan)
 		})
 	}
 
@@ -157,7 +167,7 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 
 	logger.Info(logkeys.Message, "starting server", "listen", *flListen)
-	err = http.ListenAndServe(*flListen, httpcwe.TraceLoggingMiddleware(mux, logger.With("handler", "log"), newTraceID))
+	err = http.ListenAndServe(*flListen, trace.NewTraceLoggingHandler(mux, logger.With("handler", "log"), newTraceID))
 	logs := []interface{}{logkeys.Message, "server shutdown"}
 	if err != nil {
 		logs = append(logs, logkeys.Error, err)
