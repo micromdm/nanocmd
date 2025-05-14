@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sync"
 
 	"github.com/micromdm/nanocmd/subsystem/inventory/storage"
 
@@ -14,7 +15,8 @@ import (
 
 // KV is an inventory subsystem storage backend using a key-value store.
 type KV struct {
-	b kv.TxnCRUDBucket
+	b  kv.TxnCRUDBucket
+	mu sync.RWMutex
 }
 
 // New creates a new inventory subsystem backend.
@@ -28,6 +30,9 @@ func (s *KV) RetrieveInventory(ctx context.Context, opt *storage.SearchOptions) 
 	if opt == nil || len(opt.IDs) < 1 {
 		return nil, storage.ErrNoIDs
 	}
+
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 
 	r := make(map[string]storage.Values)
 	for _, id := range opt.IDs {
@@ -55,6 +60,9 @@ func (s *KV) StoreInventoryValues(ctx context.Context, id string, newValues stor
 	if len(newValues) == 0 {
 		return nil
 	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
 	return kv.PerformCRUDBucketTxn(ctx, s.b, func(ctx context.Context, b kv.CRUDBucket) error {
 		jsonValues, err := s.b.Get(ctx, id)
@@ -91,5 +99,8 @@ func (s *KV) StoreInventoryValues(ctx context.Context, id string, newValues stor
 
 // DeleteInventory deletes all inventory data for an enrollment ID.
 func (s *KV) DeleteInventory(ctx context.Context, id string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	return s.b.Delete(ctx, id)
 }
