@@ -14,11 +14,11 @@ import (
 
 // KV is an inventory subsystem storage backend using a key-value store.
 type KV struct {
-	b kv.KeysPrefixTraversingBucket
+	b kv.TxnCRUDBucket
 }
 
 // New creates a new inventory subsystem backend.
-func New(b kv.KeysPrefixTraversingBucket) *KV {
+func New(b kv.TxnCRUDBucket) *KV {
 	return &KV{b: b}
 }
 
@@ -56,35 +56,37 @@ func (s *KV) StoreInventoryValues(ctx context.Context, id string, newValues stor
 		return nil
 	}
 
-	jsonValues, err := s.b.Get(ctx, id)
-	if err != nil && !errors.Is(err, kv.ErrKeyNotFound) {
-		return fmt.Errorf("get values: %w", err)
-	}
-
-	var values storage.Values
-	if len(jsonValues) < 1 {
-		values = newValues
-	} else {
-		// load existing values
-		if err = json.Unmarshal(jsonValues, &values); err != nil {
-			return fmt.Errorf("unmarshal values: %w", err)
+	return kv.PerformCRUDBucketTxn(ctx, s.b, func(ctx context.Context, b kv.CRUDBucket) error {
+		jsonValues, err := s.b.Get(ctx, id)
+		if err != nil && !errors.Is(err, kv.ErrKeyNotFound) {
+			return fmt.Errorf("get values: %w", err)
 		}
 
-		// merge the new values in
-		for k := range newValues {
-			values[k] = newValues[k]
+		var values storage.Values
+		if len(jsonValues) < 1 {
+			values = newValues
+		} else {
+			// load existing values
+			if err = json.Unmarshal(jsonValues, &values); err != nil {
+				return fmt.Errorf("unmarshal values: %w", err)
+			}
+
+			// merge the new values in
+			for k := range newValues {
+				values[k] = newValues[k]
+			}
 		}
-	}
 
-	if jsonValues, err = json.Marshal(&values); err != nil {
-		return fmt.Errorf("marshal values: %w", err)
-	}
+		if jsonValues, err = json.Marshal(&values); err != nil {
+			return fmt.Errorf("marshal values: %w", err)
+		}
 
-	if err = s.b.Set(ctx, id, jsonValues); err != nil {
-		return fmt.Errorf("set values: %w", err)
-	}
+		if err = s.b.Set(ctx, id, jsonValues); err != nil {
+			return fmt.Errorf("set values: %w", err)
+		}
 
-	return nil
+		return nil
+	})
 }
 
 // DeleteInventory deletes all inventory data for an enrollment ID.

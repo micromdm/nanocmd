@@ -5,6 +5,7 @@ import (
 	"github.com/micromdm/nanocmd/subsystem/inventory/storage/kv"
 
 	"github.com/micromdm/nanolib/storage/kv/kvmap"
+	"github.com/micromdm/nanolib/storage/kv/kvtxn"
 )
 
 // InMem is an in-memory inventory subsystem storage system backend.
@@ -14,5 +15,5 @@ type InMem struct {
 
 // New creates a new inventory subsystem storage system backend.
 func New() *InMem {
-	return &InMem{KV: kv.New(kvmap.New())}
+	return &InMem{KV: kv.New(kvtxn.New(kvmap.New()))}
 }
