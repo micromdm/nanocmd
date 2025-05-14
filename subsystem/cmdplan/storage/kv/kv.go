@@ -4,7 +4,6 @@ package kv
 import (
 	"context"
 	"encoding/json"
-	"sync"
 
 	"github.com/micromdm/nanocmd/subsystem/cmdplan/storage"
 
@@ -13,8 +12,7 @@ import (
 
 // KV is a cmdplan storage backend using JSON with key-value storage.
 type KV struct {
-	mu sync.RWMutex
-	b  kv.Bucket
+	b kv.Bucket
 }
 
 func New(b kv.Bucket) *KV {
@@ -23,8 +21,6 @@ func New(b kv.Bucket) *KV {
 
 // RetrieveCMDPlan unmarshals the JSON stored using name and returns the command plan.
 func (s *KV) RetrieveCMDPlan(ctx context.Context, name string) (*storage.CMDPlan, error) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
 	raw, err := s.b.Get(ctx, name)
 	if err != nil {
 		return nil, err
@@ -35,8 +31,6 @@ func (s *KV) RetrieveCMDPlan(ctx context.Context, name string) (*storage.CMDPlan
 
 // StoreCMDPlan marshals p into JSON and stores it using name.
 func (s *KV) StoreCMDPlan(ctx context.Context, name string, p *storage.CMDPlan) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
 	raw, err := json.Marshal(p)
 	if err != nil {
 		return err
@@ -46,7 +40,5 @@ func (s *KV) StoreCMDPlan(ctx context.Context, name string, p *storage.CMDPlan) 
 
 // DeleteCMDPlan deletes the JSON stored using name.
 func (s *KV) DeleteCMDPlan(ctx context.Context, name string) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
 	return s.b.Delete(ctx, name)
 }

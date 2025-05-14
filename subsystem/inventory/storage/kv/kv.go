@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"sync"
 
 	"github.com/micromdm/nanocmd/subsystem/inventory/storage"
 
@@ -15,8 +14,7 @@ import (
 
 // KV is an inventory subsystem storage backend using a key-value store.
 type KV struct {
-	mu sync.RWMutex
-	b  kv.KeysPrefixTraversingBucket
+	b kv.KeysPrefixTraversingBucket
 }
 
 // New creates a new inventory subsystem backend.
@@ -30,9 +28,6 @@ func (s *KV) RetrieveInventory(ctx context.Context, opt *storage.SearchOptions) 
 	if opt == nil || len(opt.IDs) < 1 {
 		return nil, storage.ErrNoIDs
 	}
-
-	s.mu.RLock()
-	defer s.mu.RUnlock()
 
 	r := make(map[string]storage.Values)
 	for _, id := range opt.IDs {
@@ -60,9 +55,6 @@ func (s *KV) StoreInventoryValues(ctx context.Context, id string, newValues stor
 	if len(newValues) == 0 {
 		return nil
 	}
-
-	s.mu.Lock()
-	defer s.mu.Unlock()
 
 	jsonValues, err := s.b.Get(ctx, id)
 	if err != nil && !errors.Is(err, kv.ErrKeyNotFound) {
