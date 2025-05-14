@@ -74,8 +74,6 @@ func TestWorkflow(t *testing.T) {
 		t.Error("expected error ErrStepResultCommandLenMismatch")
 	}
 
-	model := "MacBookPro11,3"
-
 	err = test.SendCommandEvent(ctx, e, "testdata/devinfo.plist", id, "53115671-3f45-49f5-b7cb-22ede8b8afdb")
 	if err != nil {
 		t.Fatal(err)
@@ -100,10 +98,10 @@ func TestWorkflow(t *testing.T) {
 		t.Fatal("nil inventory")
 	}
 
-	if wanted, have := model, values[storage.KeyModel]; wanted != have {
-		t.Errorf("wanted: %s; have: %s", wanted, have)
+	if want, have := "MacBookPro11,3", values[storage.KeyModel].(string); want != have {
+		t.Errorf("KeyModel: %s; have: %s", want, have)
 	}
-	if wanted, have := true, values[storage.KeySIPEnabled]; wanted != have {
-		t.Errorf("wanted: %v; have: %v", wanted, have)
+	if want, have := true, values[storage.KeySIPEnabled].(bool); want != have {
+		t.Errorf("KeySIPEnabled: %v; have: %v", want, have)
 	}
 }
