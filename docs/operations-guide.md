@@ -396,3 +396,10 @@ Would try to make sure that the profiles with the names of `dock`, `munki`, and 
 * Start value/context: (n/a)
 
 The lock workflow sends the device a lock command using a random PIN code that is escrowed to the inventory subsytem.
+
+### Device Information Logger Workflow
+
+* Workflow name: `io.micromdm.wf.devinfolog.v1`
+* Start value/context: (n/a)
+
+The "devinfolog" workflow sends the device a `DeviceInformation` MDM command with a few queries and simply logs the response. It has no other dependencies and offers an innocuous read-only workflow for testing or validation.

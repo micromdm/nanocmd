@@ -6,6 +6,7 @@ import (
 	"github.com/micromdm/nanocmd/workflow"
 	"github.com/micromdm/nanocmd/workflow/certprof"
 	"github.com/micromdm/nanocmd/workflow/cmdplan"
+	"github.com/micromdm/nanocmd/workflow/devinfolog"
 	"github.com/micromdm/nanocmd/workflow/fvenable"
 	"github.com/micromdm/nanocmd/workflow/fvrotate"
 	"github.com/micromdm/nanocmd/workflow/inventory"
@@ -63,6 +64,12 @@ func registerWorkflows(logger log.Logger, r registerer, s *storageConfig, e work
 		return fmt.Errorf("creating certprof workflow: %w", err)
 	} else if err = r.RegisterWorkflow(w); err != nil {
 		return fmt.Errorf("registering certprof workflow: %w", err)
+	}
+
+	if w, err = devinfolog.New(e, logger); err != nil {
+		return fmt.Errorf("creating devinfolog workflow: %w", err)
+	} else if err = r.RegisterWorkflow(w); err != nil {
+		return fmt.Errorf("registering devinfolog workflow: %w", err)
 	}
 
 	return nil
