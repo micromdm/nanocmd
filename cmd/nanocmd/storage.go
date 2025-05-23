@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"path/filepath"
 
 	storageeng "github.com/micromdm/nanocmd/engine/storage"
 	storageengdiskv "github.com/micromdm/nanocmd/engine/storage/diskv"
@@ -54,17 +55,17 @@ func parseStorage(name, dsn string) (*storageConfig, error) {
 		if dsn == "" {
 			dsn = "db"
 		}
-		inv := storageinvdiskv.New(dsn)
-		fv, err := storagefvdiskv.New(dsn, storagefvinvprk.NewInvPRK(inv))
+		inv := storageinvdiskv.New(filepath.Join(dsn, "inventory"))
+		fv, err := storagefvdiskv.New(filepath.Join(dsn, "fvkey"), storagefvinvprk.NewInvPRK(inv))
 		if err != nil {
-			return nil, fmt.Errorf("creating filevault inmem storage: %w", err)
+			return nil, fmt.Errorf("creating filevault diskv storage: %w", err)
 		}
 		eng := storageengdiskv.New(dsn)
 		return &storageConfig{
 			engine:    eng,
 			inventory: inv,
-			profile:   storageprofdiskv.New(dsn),
-			cmdplan:   storagecmdplandiskv.New(dsn),
+			profile:   storageprofdiskv.New(filepath.Join(dsn, "profile")),
+			cmdplan:   storagecmdplandiskv.New(filepath.Join(dsn, "cmdplan")),
 			event:     eng,
 			filevault: fv,
 		}, nil

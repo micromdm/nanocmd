@@ -2,8 +2,6 @@
 package diskv
 
 import (
-	"path/filepath"
-
 	"github.com/micromdm/nanocmd/subsystem/profile/storage/kv"
 
 	"github.com/micromdm/nanolib/storage/kv/kvdiskv"
@@ -19,7 +17,7 @@ type Diskv struct {
 func New(path string) *Diskv {
 	return &Diskv{
 		KV: kv.New(kvdiskv.New(diskv.New(diskv.Options{
-			BasePath:     filepath.Join(path, "profile"),
+			BasePath:     path,
 			Transform:    kvdiskv.FlatTransform,
 			CacheSizeMax: 1024 * 1024,
 		}))),

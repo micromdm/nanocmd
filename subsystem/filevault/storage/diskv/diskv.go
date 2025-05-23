@@ -3,7 +3,6 @@ package diskv
 
 import (
 	"context"
-	"path/filepath"
 
 	"github.com/micromdm/nanocmd/subsystem/filevault/storage"
 	"github.com/micromdm/nanocmd/subsystem/filevault/storage/kv"
@@ -22,7 +21,7 @@ func New(path string, p storage.PRKStorage) (*Diskv, error) {
 	kvStore, err := kv.New(
 		context.Background(),
 		kvdiskv.New(diskv.New(diskv.Options{
-			BasePath:     filepath.Join(path, "fvkey"),
+			BasePath:     path,
 			Transform:    flatTransform,
 			CacheSizeMax: 1024 * 1024,
 		})),

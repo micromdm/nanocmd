@@ -2,8 +2,6 @@
 package diskv
 
 import (
-	"path/filepath"
-
 	"github.com/micromdm/nanocmd/subsystem/cmdplan/storage/kv"
 
 	"github.com/micromdm/nanolib/storage/kv/kvdiskv"
@@ -20,7 +18,7 @@ func New(path string) *Diskv {
 	flatTransform := func(s string) []string { return []string{} }
 	return &Diskv{
 		KV: kv.New(kvdiskv.New(diskv.New(diskv.Options{
-			BasePath:     filepath.Join(path, "cmdplan"),
+			BasePath:     path,
 			Transform:    flatTransform,
 			CacheSizeMax: 1024 * 1024,
 		}))),
