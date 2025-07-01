@@ -1,10 +1,10 @@
 module github.com/micromdm/nanocmd
 
-go 1.19
+go 1.21.0
 
 require (
 	github.com/alexedwards/flow v0.0.0-20220806114457-cf11be9e0e03
-	github.com/go-sql-driver/mysql v1.8.1
+	github.com/go-sql-driver/mysql v1.9.3
 	github.com/google/uuid v1.6.0
 	github.com/jessepeterson/mdmcommands v0.0.0-20241219204234-98d1786612cb
 	github.com/micromdm/nanolib v0.3.0
