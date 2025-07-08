@@ -97,7 +97,7 @@ func (w *Workflow) StepCompleted(ctx context.Context, stepResult *workflow.StepR
 		switch r := response.(type) {
 		case *mdmcommands.DeviceInformationResponse:
 			// we did send a SecurityInfo command, too, but we only care about our
-			// DeviceInfo in the step completeion. we process the SecurityInfo
+			// DeviceInfo in the step completion. we process the SecurityInfo
 			// command as an event.
 
 			if err := r.Validate(); err != nil {
@@ -118,6 +118,7 @@ func (w *Workflow) StepCompleted(ctx context.Context, stepResult *workflow.StepR
 			storeIfPresent(v, storage.KeyHasBattery, qr.HasBattery)
 			storeIfPresent(v, storage.KeySupportsLOM, qr.SupportsLOMDevice)
 			storeIfPresent(v, storage.KeyIsMultiUser, qr.IsMultiUser)
+			storeIfPresent(v, storage.KeyURLParams, &stepResult.Params)
 			if len(v) > 0 {
 				v[storage.KeyLastSource] = mdmcommands.DeviceInformationRequestType
 				v[storage.KeyModified] = time.Now()
