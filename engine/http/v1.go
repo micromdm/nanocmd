@@ -14,6 +14,7 @@ type APIStorage interface {
 type APIEngine interface {
 	WorkflowNameChecker
 	WorkflowStarter
+	WorkflowCanceller
 }
 
 // Mux can register HTTP handlers.
@@ -36,6 +37,11 @@ func HandleAPIv1(prefix string, mux Mux, logger log.Logger, e APIEngine, s APISt
 	mux.Handle(
 		prefix+"/workflow/:name/start",
 		StartWorkflowHandler(e, logger.With("handler", "start workflow")),
+		"POST",
+	)
+	mux.Handle(
+		prefix+"/workflow/:name/cancel",
+		CancelWorkflowHandler(e, logger.With("handler", "cancel workflow")),
 		"POST",
 	)
 
