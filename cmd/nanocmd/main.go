@@ -22,6 +22,7 @@ import (
 	profhttp "github.com/micromdm/nanocmd/subsystem/profile/http"
 
 	"github.com/alexedwards/flow"
+	"github.com/micromdm/nanolib/envflag"
 	nanohttp "github.com/micromdm/nanolib/http"
 	"github.com/micromdm/nanolib/http/trace"
 	"github.com/micromdm/nanolib/log/stdlogfmt"
@@ -39,7 +40,7 @@ func main() {
 	var (
 		flDebug   = flag.Bool("debug", false, "log debug messages")
 		flListen  = flag.String("listen", ":9003", "HTTP listen address")
-		flVersion = flag.Bool("version", false, "print version")
+		flVersion = flag.Bool("version", false, "print version and exit")
 		flDumpWH  = flag.Bool("dump-webhook", false, "dump webhook input")
 		flAPIKey  = flag.String("api", "", "API key for API endpoints")
 		flEnqURL  = flag.String("enqueue-url", "", "URL of MDM server enqueue endpoint")
@@ -47,12 +48,13 @@ func main() {
 		flEnqAPI  = flag.String("enqueue-api", "", "MDM server API key")
 		flStorage = flag.String("storage", "file", "name of storage backend")
 		flDSN     = flag.String("storage-dsn", "", "data source name (e.g. connection string or path)")
+		flOptions = flag.String("storage-options", "", "storage backend options")
 		flMicro   = flag.Bool("micromdm", false, "MicroMDM-style command submission")
 		flWorkSec = flag.Uint("worker-interval", uint(engine.DefaultDuration/time.Second), "interval for worker in seconds")
 		flPushSec = flag.Uint("repush-interval", uint(engine.DefaultRePushDuration/time.Second), "interval for repushes in seconds")
 		flStTOSec = flag.Uint("step-timeout", uint(engine.DefaultTimeout/time.Second), "default step timeout in seconds")
 	)
-	flag.Parse()
+	envflag.Parse("NANOCMD_", []string{"version"})
 
 	if *flVersion {
 		fmt.Println(version)
@@ -67,7 +69,7 @@ func main() {
 	}
 
 	// configure storage
-	storage, err := parseStorage(*flStorage, *flDSN)
+	storage, err := parseStorage(*flStorage, *flDSN, *flOptions)
 	if err != nil {
 		logger.Info(logkeys.Message, "parse storage", logkeys.Error, err)
 		os.Exit(1)

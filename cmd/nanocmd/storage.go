@@ -34,7 +34,7 @@ type storageConfig struct {
 	filevault storagefv.FVRotate
 }
 
-func parseStorage(name, dsn string) (*storageConfig, error) {
+func parseStorage(name, dsn, _ string) (*storageConfig, error) {
 	switch name {
 	case "inmem":
 		inv := storageinvinmem.New()

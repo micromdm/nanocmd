@@ -6,71 +6,84 @@ This is a brief overview of the various flags, APIs, and other topics related to
 
 ### Command line flags
 
-Additional context and description for the NanoCMD server command line flags follows. The `-h` flag will print the supported flags for the server.
+Command line flags can be specified using command line arguments or environment variables (in NanoCMD versions later than v0.6). Flags take precedence over environment variables, which take precedence over default values. Environment variables are denoted in square brackets below (e.g., [HELLO]), and default values are shown in parentheses (e.g., (default "world")). If an environment variable is currently set then the help output will add "is set" as an indicator.
+
+#### -h, -help
+
+Built-in flag that prints all other available flags, environment variables, and defaults.
 
 #### -api string
 
- * API key for API endpoints
+* API key for API endpoints [NANOCMD_API]
 
 API authorization in NanoCMD is simply HTTP Basic authentication using "nanocmd" as the username and this API key as the password.
 
 #### -debug
 
- * log debug messages
+* log debug messages [NANOCMD_DEBUG]
 
 Enable additional debug logging.
 
 #### -dump-webhook
 
- * dump webhook input
+* dump webhook input [NANOCMD_DUMP_WEBHOOK]
 
 For each incoming webhook response this flag dumps the HTTP body to standard output. For the "mdm.Connect" (command response) webhook event it also decodes and outputs the raw Plist.
 
 #### -enqueue-api string
 
- * MDM server API key
+* MDM server API key [NANOCMD_ENQUEUE_API]
 
 The API key (HTTP Basic authentication password) for the MDM server enqueue endpoint. The HTTP Basic username depends on the MDM mode. By default it is "nanomdm" but if the `-micromdm` flag is enabled then it is "micromdm".
 
 #### -enqueue-url string
 
- * URL of MDM server enqueue endpoint
+* URL of MDM server enqueue endpoint [NANOCMD_ENQUEUE_URL]
 
 URL of the MDM server for enqueuing commands. The enrollmnet ID is added onto this URL as a path element (or multiple, if the MDM server supports it).
 
 #### -listen string
 
- * HTTP listen address (default ":9003")
+* HTTP listen address [NANOCMD_LISTEN] (default ":9003")
 
 Specifies the listen address (interface & port number) for the server to listen on.
 
 #### -micromdm
 
- * MicroMDM-style command submission
+* MicroMDM-style command submission [NANOCMD_MICROMDM]
 
 Submit commands for enqueueing in a style that is compatible with MicroMDM (instead of NanoMDM). Specifically this flag limits sending commands to one enrollment ID at a time, uses a POST request, and changes the HTTP Basic username.
 
 #### -push-url string
 
- * URL of MDM server push endpoint
+* URL of MDM server push endpoint [NANOCMD_PUSH_URL]
 
 URL of the MDM server for sending APNs pushes. The enrollment ID is added onto this URL as a path element (or multiple, if the MDM server supports it).
 
 #### -repush-interval uint
 
- * interval for repushes in seconds (default 86400) [1 day]
+* interval for repushes in seconds [NANOCMD_REPUSH_INTERVAL] (default 86400)
+  * Default interval is 1 day.
 
 If an enrollment ID has not seen a response to a command after this interval then NanoCMD sends an APNs notification to the device.
 
 #### -step-timeout uint
 
- * default step timeout in seconds (default 259200) [3 days]
+ * default step timeout in seconds [NANOCMD_STEP_TIMEOUT] (default 259200)
+   * Default timeout is 3 days.
 
 If a step is not completed within this time period the step is cancelled and returned to the workflow for any (optional) processing. Note the client may still respond to the commands (they are not de-queued from the MDM server, merely removed from tracking in NanoCMD).
 
 #### -storage & -storage-dsn
 
-The `-storage` and `-storage-dsn` flags together configure the storage backend. `-storage` specifies the storage backend type while `-storage-dsn` specifies the data source name (or DSN — i.e. the database location or connection string). The default storage backend is "file" if no other backend is specified.
+* -storage string
+  * name of storage backend [NANOCMD_STORAGE] (default "file")
+* -storage-dsn string
+  * data source name (e.g. connection string or path) [NANOCMD_STORAGE_DSN]
+* -storage-options string
+  * storage backend options [NANOCMD_STORAGE_OPTIONS]
+
+The `-storage`, `-storage-dsn`, and `-storage-options` flags together configure the storage backend. `-storage` specifies the storage backend type while `-storage-dsn` specifies the Data Source Name (i.e. the database connection string or location). The optional `-storage-options` flag specifies options for the backend if it supports them. The default storage backend is `file` if no other backend is specified.
 
 ##### file storage backend
 
@@ -101,13 +114,14 @@ Be sure to create the storage tables with the [schema.sql](../storage/mysql/sche
 
 #### -version
 
- * print version
+* print version and exit
 
 Print version and exit.
 
 #### -worker-interval uint
 
- * interval for worker in seconds (default 300) [5 minutes]
+* interval for worker in seconds [NANOCMD_WORKER_INTERVAL] (default 300)
+  * Default interval is 5 minutes.
 
 NanoCMD spins up a worker that enqueues future steps, re-pushes to devices, and monitors for timed-out steps. The worker will wake up at this internval to process asynchronous duties. Setting this flag to zero will turn off the worker (effectively disabling those features).
 
