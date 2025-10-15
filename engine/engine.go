@@ -150,6 +150,10 @@ func (e *Engine) StartWorkflow(ctx context.Context, name string, context []byte,
 			ids = diff(ids, wRunningIDs) // replace our ids with the set of NON-outstanding ids
 			if len(ids) < 1 {
 				// if all IDs are already running, then return an error
+
+				// log ids
+				logger.Debug(logkeys.Message, fmt.Sprintf("ids: %s, wRIDs: %s", ids, wRunningIDs))
+
 				return "", fmt.Errorf("%w on %d (of %d) ids", ErrWorkflowAlreadyStarted, len(wRunningIDs), ct)
 			} else {
 				logger.Debug(
@@ -206,6 +210,21 @@ func (e *Engine) StartWorkflow(ctx context.Context, name string, context []byte,
 	}
 
 	return instanceID, retErr
+}
+
+func (e *Engine) CancelWorkflow(ctx context.Context, ids []string, name string) error {
+	// iterate over all ids
+
+	for _, id := range ids {
+		if err := e.storage.CancelSteps(ctx, id, name); err != nil {
+			return fmt.Errorf("canceling steps: %w", err)
+		}
+
+		if err := e.storage.ClearWorkflowStatus(ctx, id); err != nil {
+			return fmt.Errorf("clearing workflow status: %w", err)
+		}
+	}
+	return nil
 }
 
 // stepDefaultTimeout returns either the engine or workflow default step timeout.
