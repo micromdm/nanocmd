@@ -1,0 +1,12 @@
+CREATE TABLE subsystem_profiles (
+    name VARCHAR(255) NOT NULL,
+
+    profile_id   VARCHAR(255) NOT NULL,
+    profile_uuid VARCHAR(255) NOT NULL,
+    raw_profile  MEDIUMTEXT NOT NULL,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (name)
+);

@@ -10,14 +10,17 @@ import (
 	"github.com/micromdm/nanocmd/subsystem/profile/storage"
 )
 
-func TestProfileStorage(t *testing.T, newStorage func() storage.Storage) {
-	s := newStorage()
+func TestProfileStorage(t *testing.T, newStorage func() (storage.Storage, error)) {
+	s, err := newStorage()
+	if err != nil {
+		t.Fatal(err)
+	}
 	ctx := context.Background()
 
 	info := storage.ProfileInfo{Identifier: "com.test", UUID: "01AB"}
 	raw := []byte("23CD")
 
-	err := s.StoreProfile(ctx, "test", info, raw)
+	err = s.StoreProfile(ctx, "test", info, raw)
 	if err != nil {
 		t.Fatal(err)
 	}
