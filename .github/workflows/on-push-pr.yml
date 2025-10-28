@@ -125,4 +125,4 @@ jobs:
       - name: setup test dsn
         run: echo "NANOCMD_MYSQL_STORAGE_TEST_DSN=nanocmd:nanocmd@tcp(localhost:$PORT)/nanocmd" >> $GITHUB_ENV
 
-      - run: go test -v ./engine/storage/mysql
+      - run: go test -v ./engine/storage/mysql/... ./subsystem/profile/storage/mysql/...
