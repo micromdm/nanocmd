@@ -8,5 +8,5 @@ import (
 )
 
 func TestDiskv(t *testing.T) {
-	test.TestProfileStorage(t, func() storage.Storage { return New(t.TempDir()) })
+	test.TestProfileStorage(t, func() (storage.Storage, error) { return New(t.TempDir()), nil })
 }

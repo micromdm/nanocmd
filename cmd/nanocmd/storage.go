@@ -21,6 +21,7 @@ import (
 	storageprof "github.com/micromdm/nanocmd/subsystem/profile/storage"
 	storageprofdiskv "github.com/micromdm/nanocmd/subsystem/profile/storage/diskv"
 	storageprofinmem "github.com/micromdm/nanocmd/subsystem/profile/storage/inmem"
+	storageprofmysql "github.com/micromdm/nanocmd/subsystem/profile/storage/mysql"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -79,10 +80,14 @@ func parseStorage(name, dsn, _ string) (*storageConfig, error) {
 		if err != nil {
 			return nil, err
 		}
+		prof, err := storageprofmysql.New(storageprofmysql.WithDSN(dsn))
+		if err != nil {
+			return nil, err
+		}
 		return &storageConfig{
 			engine:    eng,
 			inventory: inv,
-			profile:   storageprofinmem.New(),
+			profile:   prof,
 			cmdplan:   storagecmdplaninmem.New(),
 			event:     eng,
 			filevault: fv,
