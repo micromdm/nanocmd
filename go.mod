@@ -6,7 +6,7 @@ require (
 	github.com/alexedwards/flow v0.0.0-20220806114457-cf11be9e0e03
 	github.com/go-sql-driver/mysql v1.8.1
 	github.com/google/uuid v1.6.0
-	github.com/jessepeterson/mdmcommands v0.0.0-20241219204234-98d1786612cb
+	github.com/jessepeterson/mdmcommands v0.0.0-20251210055310-75943edf7c59
 	github.com/micromdm/nanolib v0.5.0
 	github.com/micromdm/plist v0.2.1
 	github.com/peterbourgon/diskv/v3 v3.0.1
