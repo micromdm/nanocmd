@@ -63,25 +63,25 @@ URL of the MDM server for sending APNs pushes. The enrollment ID is added onto t
 #### -repush-interval uint
 
 * interval for repushes in seconds [NANOCMD_REPUSH_INTERVAL] (default 86400)
-  * Default interval is 1 day.
+* Default interval is 1 day.
 
 If an enrollment ID has not seen a response to a command after this interval then NanoCMD sends an APNs notification to the device.
 
 #### -step-timeout uint
 
  * default step timeout in seconds [NANOCMD_STEP_TIMEOUT] (default 259200)
-   * Default timeout is 3 days.
+ * Default timeout is 3 days.
 
 If a step is not completed within this time period the step is cancelled and returned to the workflow for any (optional) processing. Note the client may still respond to the commands (they are not de-queued from the MDM server, merely removed from tracking in NanoCMD).
 
 #### -storage & -storage-dsn
 
 * -storage string
-  * name of storage backend [NANOCMD_STORAGE] (default "file")
+* name of storage backend [NANOCMD_STORAGE] (default "file")
 * -storage-dsn string
-  * data source name (e.g. connection string or path) [NANOCMD_STORAGE_DSN]
+* data source name (e.g. connection string or path) [NANOCMD_STORAGE_DSN]
 * -storage-options string
-  * storage backend options [NANOCMD_STORAGE_OPTIONS]
+* storage backend options [NANOCMD_STORAGE_OPTIONS]
 
 The `-storage`, `-storage-dsn`, and `-storage-options` flags together configure the storage backend. `-storage` specifies the storage backend type while `-storage-dsn` specifies the Data Source Name (i.e. the database connection string or location). The optional `-storage-options` flag specifies options for the backend if it supports them. The default storage backend is `file` if no other backend is specified.
 
@@ -112,7 +112,25 @@ Configures the MySQL storage backend. The `-storage-dsn` flag should be in the [
 
 **WARNING:** The MySQL backend currently only implements storage for the workflow *engine* and the profile *subsystem*. When running NanoCMD the other *subsystem* storage is completely in-memory as if you supplied `-storage inmem`. The practical effect is that non-profile subsystem storage is volatile and no data will be persisted for them.
 
-*Example:* `-storage mysql -dsn nanocmd:nanocmd/mycmddb`
+*Example:* `-storage mysql -storage-dsn nanocmd:nanocmd/mycmddb`
+
+##### mongodb storage backend
+
+* `-storage mongodb`
+
+Configures the MongoDB storage backend. The `-storage-dsn` flag should be a MongoDB connection string. If the connection string includes a database name, NanoCMD uses that database; otherwise it uses `nanocmd`.
+
+*Example:* `-storage mongodb -storage-dsn mongodb://localhost:27017/nanomdm`
+
+Options are specified as a comma-separated list of "key=value" pairs. The mongodb backend supports these options:
+
+* `database=name`
+  * This option overrides the database name from the connection string.
+
+* `collection_prefix=prefix`
+  * This option prefixes the NanoCMD MongoDB collection names, which can be useful when sharing a database.
+
+*Example:* `-storage mongodb -storage-dsn mongodb://localhost:27017 -storage-options database=nanomdm,collection_prefix=cmd_`
 
 #### -version
 
@@ -123,7 +141,7 @@ Print version and exit.
 #### -worker-interval uint
 
 * interval for worker in seconds [NANOCMD_WORKER_INTERVAL] (default 300)
-  * Default interval is 5 minutes.
+* Default interval is 5 minutes.
 
 NanoCMD spins up a worker that enqueues future steps, re-pushes to devices, and monitors for timed-out steps. The worker will wake up at this internval to process asynchronous duties. Setting this flag to zero will turn off the worker (effectively disabling those features).
 
@@ -149,10 +167,10 @@ The webhook endpoint handles MicroMDM-compatible webhook events. These include M
 
 * Endpoint: `POST /v1/workflow/{name}/start`
 * Path parameters:
-  * `name`: workflow name
+* `name`: workflow name
 * Query parameters:
-  * `id`: enrollment ID. multiple supported.
-  * `context`: workflow-dependent context (start) value
+* `id`: enrollment ID. multiple supported.
+* `context`: workflow-dependent context (start) value
 
 Starts a workflow.
 
@@ -161,7 +179,7 @@ Starts a workflow.
 * Endpoint: `GET /v1/event/{name}`
 * Endpoint: `PUT /v1/event/{name}`
 * Path parameters:
-  * `name`: user-defined event subscription name
+* `name`: user-defined event subscription name
 
 Configures Event Subscriptions. Event Subscriptions start workflows for MDM events. In JSON form they look like this:
 
@@ -177,12 +195,12 @@ Configures Event Subscriptions. Event Subscriptions start workflows for MDM even
 The JSON keys are as follows:
 
 * `event`: the NanoCMD event name. 
-  * `Authenticate`: when a device sends an Authenticate MDM check-in message.
-  * `TokenUpdate`: when an enrollment sends a TokenUpdate MDM check-in message.
-  * `Enrollment`: when an enrollment enrolls; i.e. the first TokenUpdate message.
-  * `CheckOut`: when a device sends a CheckOut MDM check-in message.
-  * `Idle`: when an enrollment sends an Idle command response.
-  * `IdleNotStartedSince`: when an enrollment sends an Idle message and the associated workflow has not been started in the given number of seconds. The seconds are provided in the `event_context` string.
+* `Authenticate`: when a device sends an Authenticate MDM check-in message.
+* `TokenUpdate`: when an enrollment sends a TokenUpdate MDM check-in message.
+* `Enrollment`: when an enrollment enrolls; i.e. the first TokenUpdate message.
+* `CheckOut`: when a device sends a CheckOut MDM check-in message.
+* `Idle`: when an enrollment sends an Idle command response.
+* `IdleNotStartedSince`: when an enrollment sends an Idle message and the associated workflow has not been started in the given number of seconds. The seconds are provided in the `event_context` string.
 * `workflow`: the name of the workflow.
 * `context`: optional context to give to the workflow when it starts.
 * `event_context`: optional context to give to the event.
@@ -199,7 +217,7 @@ Returns the Configuration Profile template for the FileVault enable workflow. Ta
 * Endpoint: `PUT /v1/profile/{name}`
 * Endpoint: `DELETE /v1/profile/{name}`
 * Path parameters:
-  * `name`: user-defined profile name
+* `name`: user-defined profile name
 
 Retrieve, store, or delete profiles by name parameter in the path. Upload raw profiles (including signed profiles) using the `PUT` method. Retrive again with `GET` and of course delete with `DELETE`.
 
@@ -207,7 +225,7 @@ Retrieve, store, or delete profiles by name parameter in the path. Upload raw pr
 
 * Endpoint `GET /v1/profiles`
 * Query parameters:
-  * `name`: user-defined profile name. optional. multiple supported.
+* `name`: user-defined profile name. optional. multiple supported.
 
 List the profile UUIDs and identifiers mapped by profile name in profile subsystem storage. Supply the name argument for specific profiles to list.
 
@@ -216,7 +234,7 @@ List the profile UUIDs and identifiers mapped by profile name in profile subsyst
 * Endpoint: `GET /v1/cmdplan/{name}`
 * Endpoint: `PUT /v1/cmdplan/{name}`
 * Path parameters:
-  * `name`: user-defined command plan name
+* `name`: user-defined command plan name
 
 Retrieve and store command plans — collections of MDM actions/commands to be sent together (such as upon device enrollment). **See also** the below discussion of the command plan workflow. Command plans take the JSON form of:
 
@@ -242,7 +260,7 @@ The JSON keys are:
 
 * Endpoint: `GET /v1/inventory`
 * Query parameters:
-  * `id`: enrollment ID. multiple supported.
+* `id`: enrollment ID. multiple supported.
 
 Queries the inventory subsystem to retrieve previously saved inventory data. Inventory key-value data is returned in a JSON object (map) for for each `id` parameter specified.
 
@@ -320,7 +338,7 @@ Example JSON object:
 
 * Workflow name: `io.micromdm.wf.cmdplan.v1`
 * Start value/context: string value of command plan name. See also parameter expansion discussion below.
-  * Example: `my_cool_cmdplan`
+* Example: `my_cool_cmdplan`
 
 A command plan (or cmdplan) is a named structured list of operations to send to an enrollment. Each item roughtly corresponds to an MDM command (such as for installing profiles or applications). An example might look like:
 
@@ -414,7 +432,7 @@ The inventory workflow sends `DeviceInformation` and `SecurityInfo` commands to 
 
 * Workflow name: `io.micromdm.wf.profile.v1`
 * Start value/context: comma-separated list of profile names. removals prefixed with a minus/dash (-)
-  * Example: `profile1,profile2,-profile3,profile4`
+* Example: `profile1,profile2,-profile3,profile4`
 
 The profile workflow manages Configuration Profile "state" on an enrollment for the set of provided profile names. The workflow checks the already-installed profile identifiers and UUIDs to make sure the profiles are current and if not (or they are missing) installs them. The list of profiles is specified as a comma-separated list of profile names already stored in the profile subsystem. You can also specify profiles to be removed by prefixing them with a minus/dash (-) character.
 
