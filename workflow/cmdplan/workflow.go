@@ -103,6 +103,37 @@ func (w *Workflow) commandsFromCMDPlan(ctx context.Context, cmdPlan *storage.CMD
 		commands = append(commands, c)
 	}
 
+	// determine if we need to add AccountConfig command
+	if cmdPlan.AccountConfig != nil {
+		c := mdmcommands.NewAccountConfigurationCommand(w.ider.ID())
+
+		c.Command.DontAutoPopulatePrimaryAccountInfo = cmdPlan.AccountConfig.DontAutoPopulatePrimaryAccountInfo
+		c.Command.LockPrimaryAccountInfo = cmdPlan.AccountConfig.LockPrimaryAccountInfo
+		c.Command.PrimaryAccountFullName = cmdPlan.AccountConfig.PrimaryAccountFullName
+		c.Command.PrimaryAccountUserName = cmdPlan.AccountConfig.PrimaryAccountUserName
+		c.Command.SetPrimarySetupAccountAsRegularUser = cmdPlan.AccountConfig.SetPrimarySetupAccountAsRegularUser
+		c.Command.SkipPrimarySetupAccountCreation = cmdPlan.AccountConfig.SkipPrimarySetupAccountCreation
+		c.Command.ManagedLocalUserShortName = cmdPlan.AccountConfig.ManagedLocalUserShortName
+
+		if cmdPlan.AccountConfig.AutoSetupAdminAccounts != nil && len(*cmdPlan.AccountConfig.AutoSetupAdminAccounts) > 0 {
+			adminAccounts := *cmdPlan.AccountConfig.AutoSetupAdminAccounts
+
+			var mdmAdmins []mdmcommands.AutoSetupAdminAccountItem
+			for _, admin := range adminAccounts {
+				mdmAdmins = append(mdmAdmins, mdmcommands.AutoSetupAdminAccountItem{
+					FullName:     admin.FullName,
+					Hidden:       admin.Hidden,
+					PasswordHash: admin.PasswordHash,
+					ShortName:    admin.ShortName,
+				})
+			}
+
+			c.Command.AutoSetupAdminAccounts = &mdmAdmins
+		}
+
+		commands = append(commands, c)
+	}
+
 	// determine if we need to send the device configured command
 	// TODO: this may require using a separate step if we can't guarantee
 	// ordered queueing of MDM commands in step enqueuings.
