@@ -187,7 +187,7 @@ func (e *Engine) StartWorkflow(ctx context.Context, name string, context []byte,
 		}
 
 		// create a workflow start step
-		ss, err := workflowStepStartFromEngine(instanceID, w, context, ids, ev, mdmCtx)
+		ss, err := workflowStepStartFromEngine(instanceID, w, context, startID, ev, mdmCtx)
 		if err != nil {
 			return instanceID, fmt.Errorf("converting step start: %w", err)
 		}
