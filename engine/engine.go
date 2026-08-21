@@ -238,22 +238,38 @@ func (e *Engine) EnqueueStep(ctx context.Context, n workflow.Namer, se *workflow
 		return fmt.Errorf("storing step: %w", err)
 	}
 
+	stepLogger := ctxlog.Logger(ctx, e.logger).With(
+		logkeys.InstanceID, ss.InstanceID,
+		logkeys.GenericCount, len(ss.IDs),
+		logkeys.WorkflowName, ss.WorkflowName,
+		logkeys.StepName, ss.Name,
+	)
+	if len(ss.IDs) > 0 {
+		stepLogger = stepLogger.With(
+			logkeys.EnrollmentID, ss.IDs[0],
+			logkeys.FirstEnrollmentID, ss.IDs[0],
+		)
+	}
+
 	if ss.NotUntil.IsZero() {
 		// if we are not delaying the steps, then send them now
 		for _, cmd := range ss.Commands {
+			// associate the workflow instance with the individual command
+			// UUIDs we're about to enqueue. note the worker logs the same
+			// keys for delayed (NotUntil) steps.
+			cmdLogger := stepLogger.With(
+				logkeys.CommandUUID, cmd.CommandUUID,
+				logkeys.RequestType, cmd.RequestType,
+			)
 			if err = e.enqueuer.Enqueue(ctx, ss.IDs, cmd.Command); err != nil {
-				return fmt.Errorf("enqueueing step: %w", err)
+				return fmt.Errorf("enqueueing step command %s (%s): %w", cmd.CommandUUID, cmd.RequestType, err)
 			}
+			cmdLogger.Debug(logkeys.Message, "enqueued step command")
 		}
 	}
 
-	ctxlog.Logger(ctx, e.logger).Debug(
+	stepLogger.Debug(
 		logkeys.Message, "enqueued step",
-		logkeys.InstanceID, ss.InstanceID,
-		logkeys.GenericCount, len(ss.IDs),
-		logkeys.FirstEnrollmentID, ss.IDs[0],
-		logkeys.WorkflowName, ss.WorkflowName,
-		logkeys.StepName, ss.Name,
 		"command_count", len(ss.Commands),
 	)
 
