@@ -18,4 +18,5 @@ const (
 	KeyIsMultiUser  = "is_multiuser"  // bool
 	KeySupportsLOM  = "supports_lom"  // bool
 	KeyAppleSilicon = "apple_silicon" // bool
+	KeyURLParams    = "url_params"    // map[string]string
 )
