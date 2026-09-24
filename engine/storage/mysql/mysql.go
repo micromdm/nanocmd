@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/micromdm/nanocmd/engine/storage/mysql/sqlc"
+
+	"github.com/micromdm/nanolib/log"
 )
 
 const mySQLTimestampFormat = "2006-01-02 15:04:05"
@@ -18,6 +20,8 @@ type MySQLStorage struct {
 	db *sql.DB
 	q  *sqlc.Queries
 
+	logger log.Logger
+
 	randMu sync.Mutex
 	rand   *rand.Rand
 }
@@ -26,6 +30,7 @@ type config struct {
 	driver string
 	dsn    string
 	db     *sql.DB
+	logger log.Logger
 }
 
 // Option allows configuring a MySQLStorage.
@@ -54,9 +59,17 @@ func WithDB(db *sql.DB) Option {
 	}
 }
 
+// WithLogger sets the storage logger. The storage is silent by default.
+// It logs only those failures it deliberately does not return to its caller.
+func WithLogger(logger log.Logger) Option {
+	return func(c *config) {
+		c.logger = logger
+	}
+}
+
 // New creates and returns a new MySQL.
 func New(opts ...Option) (*MySQLStorage, error) {
-	cfg := &config{driver: "mysql"}
+	cfg := &config{driver: "mysql", logger: log.NopLogger}
 	for _, opt := range opts {
 		opt(cfg)
 	}
@@ -71,9 +84,10 @@ func New(opts ...Option) (*MySQLStorage, error) {
 		return nil, err
 	}
 	return &MySQLStorage{
-		db:   cfg.db,
-		q:    sqlc.New(cfg.db),
-		rand: rand.New(rand.NewSource(time.Now().UnixNano())),
+		db:     cfg.db,
+		q:      sqlc.New(cfg.db),
+		logger: cfg.logger,
+		rand:   rand.New(rand.NewSource(time.Now().UnixNano())),
 	}, nil
 }
 
