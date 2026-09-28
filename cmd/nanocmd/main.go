@@ -69,7 +69,7 @@ func main() {
 	}
 
 	// configure storage
-	storage, err := parseStorage(*flStorage, *flDSN, *flOptions)
+	storage, err := parseStorage(*flStorage, *flDSN, *flOptions, logger)
 	if err != nil {
 		logger.Info(logkeys.Message, "parse storage", logkeys.Error, err)
 		os.Exit(1)
