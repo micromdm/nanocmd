@@ -124,8 +124,13 @@ func (w *Worker) processEnqueuings(ctx context.Context) error {
 			logkeys.WorkflowName, step.WorkflowName,
 			logkeys.StepName, step.Name,
 			logkeys.GenericCount, len(step.IDs),
-			logkeys.FirstEnrollmentID, step.IDs[0],
 		)
+		if len(step.IDs) > 0 {
+			stepLogger = stepLogger.With(
+				logkeys.EnrollmentID, step.IDs[0],
+				logkeys.FirstEnrollmentID, step.IDs[0],
+			)
+		}
 		if len(step.Commands) < 1 {
 			stepLogger.Info()
 		}

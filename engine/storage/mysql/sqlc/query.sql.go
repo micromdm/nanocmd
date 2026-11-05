@@ -23,41 +23,6 @@ func (q *Queries) ClearWorkflowStatus(ctx context.Context, enrollmentID string) 
 	return err
 }
 
-const countOutstandingIDWorkflowStepCommands = `-- name: CountOutstandingIDWorkflowStepCommands :one
-SELECT
-  COUNT(*),
-  c1.step_id
-FROM
-  id_commands c1
-  JOIN id_commands c2
-    ON c1.step_id = c2.step_id
-WHERE
-  c1.enrollment_id = ? AND
-  c1.completed = 0 AND
-  c2.enrollment_id = c1.enrollment_id AND
-  c2.command_uuid = ?
-GROUP BY
-  c1.step_id
-LIMIT 1
-`
-
-type CountOutstandingIDWorkflowStepCommandsParams struct {
-	EnrollmentID string
-	CommandUuid  string
-}
-
-type CountOutstandingIDWorkflowStepCommandsRow struct {
-	Count  int64
-	StepID int64
-}
-
-func (q *Queries) CountOutstandingIDWorkflowStepCommands(ctx context.Context, arg CountOutstandingIDWorkflowStepCommandsParams) (CountOutstandingIDWorkflowStepCommandsRow, error) {
-	row := q.db.QueryRowContext(ctx, countOutstandingIDWorkflowStepCommands, arg.EnrollmentID, arg.CommandUuid)
-	var i CountOutstandingIDWorkflowStepCommandsRow
-	err := row.Scan(&i.Count, &i.StepID)
-	return i, err
-}
-
 const createIDCommand = `-- name: CreateIDCommand :exec
 INSERT INTO id_commands
   (enrollment_id, command_uuid, step_id, request_type, last_push)
@@ -73,6 +38,10 @@ type CreateIDCommandParams struct {
 	LastPush     sql.NullTime
 }
 
+// The only INSERT INTO id_commands. StoreStep always creates the steps row
+// first, so an existing step can never gain a reference -- which is what lets
+// SelectUnreferencedStepIDs run without a lock. Do not add a path that points
+// new id_commands at an existing step.
 func (q *Queries) CreateIDCommand(ctx context.Context, arg CreateIDCommandParams) error {
 	_, err := q.db.ExecContext(ctx, createIDCommand,
 		arg.EnrollmentID,
@@ -139,28 +108,6 @@ func (q *Queries) CreateStepCommand(ctx context.Context, arg CreateStepCommandPa
 	return err
 }
 
-const deleteIDCommandByWorkflow = `-- name: DeleteIDCommandByWorkflow :exec
-DELETE
-  c
-FROM
-  id_commands c
-  INNER JOIN steps s
-    ON c.step_id = s.id
-WHERE
-  c.enrollment_id = ? AND
-  s.workflow_name = ?
-`
-
-type DeleteIDCommandByWorkflowParams struct {
-	EnrollmentID string
-	WorkflowName string
-}
-
-func (q *Queries) DeleteIDCommandByWorkflow(ctx context.Context, arg DeleteIDCommandByWorkflowParams) error {
-	_, err := q.db.ExecContext(ctx, deleteIDCommandByWorkflow, arg.EnrollmentID, arg.WorkflowName)
-	return err
-}
-
 const deleteIDCommands = `-- name: DeleteIDCommands :exec
 DELETE FROM
   id_commands
@@ -173,103 +120,120 @@ func (q *Queries) DeleteIDCommands(ctx context.Context, enrollmentID string) err
 	return err
 }
 
-const deleteUnusedStepCommands = `-- name: DeleteUnusedStepCommands :exec
-DELETE
-  sc
-FROM
-  step_commands sc
-  LEFT JOIN id_commands c
-    ON sc.command_uuid = c.command_uuid
+const deleteIDCommandsByWorkflowName = `-- name: DeleteIDCommandsByWorkflowName :exec
+DELETE FROM
+  id_commands
 WHERE
-  c.command_uuid IS NULL
+  enrollment_id = ? AND
+  step_id IN (
+    SELECT
+      id
+    FROM
+      steps
+    WHERE
+      workflow_name = ?
+  )
 `
 
-func (q *Queries) DeleteUnusedStepCommands(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, deleteUnusedStepCommands)
+type DeleteIDCommandsByWorkflowNameParams struct {
+	EnrollmentID string
+	WorkflowName string
+}
+
+// Scoped by workflow name rather than by a list of step IDs, so the statement
+// is a fixed size: an enrollment's step IDs are unbounded, and 65535
+// placeholders is a hard limit.
+//
+// MySQL 8 semi-joins this. For an enrollment holding few rows it drives from
+// id_commands and does one primary key lookup per row; for one holding very
+// many it flips to scanning the workflow_name index instead. Measured against
+// 100k steps sharing a name: 0.04ms for a 5-row enrollment, 337ms for a
+// 50,000-row one.
+func (q *Queries) DeleteIDCommandsByWorkflowName(ctx context.Context, arg DeleteIDCommandsByWorkflowNameParams) error {
+	_, err := q.db.ExecContext(ctx, deleteIDCommandsByWorkflowName, arg.EnrollmentID, arg.WorkflowName)
 	return err
 }
 
-const deleteWorkflowStepHavingNoCommands = `-- name: DeleteWorkflowStepHavingNoCommands :exec
-DELETE
-  s
-FROM
-  steps s
-  LEFT JOIN id_commands c
-    ON s.id = c.step_id
+const deleteStepCommandsByStepIDs = `-- name: DeleteStepCommandsByStepIDs :exec
+DELETE FROM
+  step_commands
 WHERE
-  c.step_id IS NULL
+  step_id IN (/*SLICE:step_ids*/?)
 `
 
-func (q *Queries) DeleteWorkflowStepHavingNoCommands(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, deleteWorkflowStepHavingNoCommands)
+func (q *Queries) DeleteStepCommandsByStepIDs(ctx context.Context, stepIds []int64) error {
+	query := deleteStepCommandsByStepIDs
+	var queryParams []interface{}
+	if len(stepIds) > 0 {
+		for _, v := range stepIds {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:step_ids*/?", strings.Repeat(",?", len(stepIds))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:step_ids*/?", "NULL", 1)
+	}
+	_, err := q.db.ExecContext(ctx, query, queryParams...)
 	return err
 }
 
-const deleteWorkflowStepHavingNoCommandsByStepID = `-- name: DeleteWorkflowStepHavingNoCommandsByStepID :exec
-DELETE
-  s
-FROM
-  steps s
-  LEFT JOIN id_commands c
-    ON s.id = c.step_id
+const deleteStepsByStepIDs = `-- name: DeleteStepsByStepIDs :exec
+DELETE FROM
+  steps
 WHERE
-  c.step_id IS NULL AND
-  s.id = ?
+  id IN (/*SLICE:ids*/?)
 `
 
-func (q *Queries) DeleteWorkflowStepHavingNoCommandsByStepID(ctx context.Context, id int64) error {
-	_, err := q.db.ExecContext(ctx, deleteWorkflowStepHavingNoCommandsByStepID, id)
-	return err
-}
-
-const deleteWorkflowStepHavingNoCommandsByWorkflowName = `-- name: DeleteWorkflowStepHavingNoCommandsByWorkflowName :exec
-DELETE
-  s
-FROM
-  steps s
-  LEFT JOIN id_commands c
-    ON s.id = c.step_id
-WHERE
-  c.step_id IS NULL AND
-  s.workflow_name = ?
-`
-
-func (q *Queries) DeleteWorkflowStepHavingNoCommandsByWorkflowName(ctx context.Context, workflowName string) error {
-	_, err := q.db.ExecContext(ctx, deleteWorkflowStepHavingNoCommandsByWorkflowName, workflowName)
+func (q *Queries) DeleteStepsByStepIDs(ctx context.Context, ids []int64) error {
+	query := deleteStepsByStepIDs
+	var queryParams []interface{}
+	if len(ids) > 0 {
+		for _, v := range ids {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:ids*/?", strings.Repeat(",?", len(ids))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
+	}
+	_, err := q.db.ExecContext(ctx, query, queryParams...)
 	return err
 }
 
 const getIDCommandsByStepIDAndLock = `-- name: GetIDCommandsByStepIDAndLock :many
 SELECT
-  ic.command_uuid,
-  ic.request_type,
-  ic.result
+  command_uuid,
+  request_type,
+  result,
+  completed
 FROM
-  id_commands ic
-  INNER JOIN steps s
-    ON ic.step_id = s.id
-  LEFT JOIN step_commands sc
-    ON sc.step_id = s.id
+  id_commands
 WHERE
-  ic.enrollment_id = ? AND
-  s.id = ? AND
-  ic.completed != 0
+  enrollment_id = ? AND
+  step_id = ?
 FOR UPDATE
 `
 
 type GetIDCommandsByStepIDAndLockParams struct {
 	EnrollmentID string
-	ID           int64
+	StepID       int64
 }
 
 type GetIDCommandsByStepIDAndLockRow struct {
 	CommandUuid string
 	RequestType string
 	Result      []byte
+	Completed   bool
 }
 
+// Reads and locks this enrollment's rows for the step, and only those. Step
+// completion is decided from this result, so it has to lock: the worker's
+// timeout sweep deletes these same rows on a timer, serialized with nothing
+// (see RetrieveTimedOutSteps). No other enrollment owns them, so nothing
+// else ever waits here.
+//
+// Do not add joins. "step_id = ?" already says what a steps join would, and a
+// steps join under FOR UPDATE locks the one row the whole fan-out shares.
 func (q *Queries) GetIDCommandsByStepIDAndLock(ctx context.Context, arg GetIDCommandsByStepIDAndLockParams) ([]GetIDCommandsByStepIDAndLockRow, error) {
-	rows, err := q.db.QueryContext(ctx, getIDCommandsByStepIDAndLock, arg.EnrollmentID, arg.ID)
+	rows, err := q.db.QueryContext(ctx, getIDCommandsByStepIDAndLock, arg.EnrollmentID, arg.StepID)
 	if err != nil {
 		return nil, err
 	}
@@ -277,7 +241,12 @@ func (q *Queries) GetIDCommandsByStepIDAndLock(ctx context.Context, arg GetIDCom
 	var items []GetIDCommandsByStepIDAndLockRow
 	for rows.Next() {
 		var i GetIDCommandsByStepIDAndLockRow
-		if err := rows.Scan(&i.CommandUuid, &i.RequestType, &i.Result); err != nil {
+		if err := rows.Scan(
+			&i.CommandUuid,
+			&i.RequestType,
+			&i.Result,
+			&i.Completed,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -396,6 +365,100 @@ func (q *Queries) GetStepByID(ctx context.Context, id int64) (GetStepByIDRow, er
 	return i, err
 }
 
+const getStepIDByCommandUUID = `-- name: GetStepIDByCommandUUID :one
+SELECT
+  step_id
+FROM
+  id_commands
+WHERE
+  enrollment_id = ? AND
+  command_uuid = ?
+`
+
+type GetStepIDByCommandUUIDParams struct {
+	EnrollmentID string
+	CommandUuid  string
+}
+
+func (q *Queries) GetStepIDByCommandUUID(ctx context.Context, arg GetStepIDByCommandUUIDParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getStepIDByCommandUUID, arg.EnrollmentID, arg.CommandUuid)
+	var step_id int64
+	err := row.Scan(&step_id)
+	return step_id, err
+}
+
+const getStepIDsByEnrollmentID = `-- name: GetStepIDsByEnrollmentID :many
+SELECT DISTINCT
+  step_id
+FROM
+  id_commands
+WHERE
+  enrollment_id = ?
+`
+
+func (q *Queries) GetStepIDsByEnrollmentID(ctx context.Context, enrollmentID string) ([]int64, error) {
+	rows, err := q.db.QueryContext(ctx, getStepIDsByEnrollmentID, enrollmentID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int64
+	for rows.Next() {
+		var step_id int64
+		if err := rows.Scan(&step_id); err != nil {
+			return nil, err
+		}
+		items = append(items, step_id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getStepIDsByEnrollmentIDAndWorkflowName = `-- name: GetStepIDsByEnrollmentIDAndWorkflowName :many
+SELECT DISTINCT
+  c.step_id
+FROM
+  id_commands c
+  INNER JOIN steps s
+    ON c.step_id = s.id
+WHERE
+  c.enrollment_id = ? AND
+  s.workflow_name = ?
+`
+
+type GetStepIDsByEnrollmentIDAndWorkflowNameParams struct {
+	EnrollmentID string
+	WorkflowName string
+}
+
+func (q *Queries) GetStepIDsByEnrollmentIDAndWorkflowName(ctx context.Context, arg GetStepIDsByEnrollmentIDAndWorkflowNameParams) ([]int64, error) {
+	rows, err := q.db.QueryContext(ctx, getStepIDsByEnrollmentIDAndWorkflowName, arg.EnrollmentID, arg.WorkflowName)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int64
+	for rows.Next() {
+		var step_id int64
+		if err := rows.Scan(&step_id); err != nil {
+			return nil, err
+		}
+		items = append(items, step_id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getWorkflowLastStarted = `-- name: GetWorkflowLastStarted :one
 SELECT
   last_created_unix
@@ -434,6 +497,111 @@ type RemoveIDCommandsByStepIDParams struct {
 func (q *Queries) RemoveIDCommandsByStepID(ctx context.Context, arg RemoveIDCommandsByStepIDParams) error {
 	_, err := q.db.ExecContext(ctx, removeIDCommandsByStepID, arg.EnrollmentID, arg.StepID)
 	return err
+}
+
+const selectStepIDsForDelete = `-- name: SelectStepIDsForDelete :many
+SELECT
+  id
+FROM
+  steps
+WHERE
+  id IN (/*SLICE:ids*/?)
+ORDER BY
+  id
+FOR UPDATE SKIP LOCKED
+`
+
+// Claims steps for collection. Rows another collector already holds are not
+// returned, so nobody ever waits here: whoever arrives first collects, the
+// rest move on and leave the step to them.
+func (q *Queries) SelectStepIDsForDelete(ctx context.Context, ids []int64) ([]int64, error) {
+	query := selectStepIDsForDelete
+	var queryParams []interface{}
+	if len(ids) > 0 {
+		for _, v := range ids {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:ids*/?", strings.Repeat(",?", len(ids))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
+	}
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int64
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const selectUnreferencedStepIDs = `-- name: SelectUnreferencedStepIDs :many
+SELECT
+  s.id
+FROM
+  steps s
+WHERE
+  s.id IN (/*SLICE:ids*/?) AND
+  NOT EXISTS (
+    SELECT
+      1
+    FROM
+      id_commands c
+    WHERE
+      c.step_id = s.id
+  )
+`
+
+// Reports which of ids nothing refers to any more. Needs no lock, because
+// "unreferenced" is a terminal state: see CreateIDCommand.
+//
+// Must run outside a transaction, after the caller's own deletes have
+// committed. Under REPEATABLE READ a caller asking this mid-transaction is
+// served from its own snapshot, so its peers' committed deletes are invisible
+// to it and every one of them concludes the step is still in use.
+func (q *Queries) SelectUnreferencedStepIDs(ctx context.Context, ids []int64) ([]int64, error) {
+	query := selectUnreferencedStepIDs
+	var queryParams []interface{}
+	if len(ids) > 0 {
+		for _, v := range ids {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:ids*/?", strings.Repeat(",?", len(ids))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
+	}
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int64
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const updateIDCommand = `-- name: UpdateIDCommand :exec

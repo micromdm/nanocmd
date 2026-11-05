@@ -10,6 +10,9 @@ import (
 
 	"github.com/micromdm/nanocmd/engine/storage"
 	"github.com/micromdm/nanocmd/engine/storage/mysql/sqlc"
+	"github.com/micromdm/nanocmd/logkeys"
+
+	"github.com/micromdm/nanolib/log/ctxlog"
 )
 
 // RetrieveCommandRequestType retrieves a command request type given id and uuid.
@@ -43,46 +46,66 @@ func (s *MySQLStorage) StoreCommandResponseAndRetrieveCompletedStep(ctx context.
 		return nil, err
 	}
 
-	cmdCt, err := s.q.CountOutstandingIDWorkflowStepCommands(
-		ctx,
-		sqlc.CountOutstandingIDWorkflowStepCommandsParams{
-			EnrollmentID: id,
-			CommandUuid:  sc.CommandUUID,
-		},
+	var (
+		ret    *storage.StepResult
+		stepID int64
 	)
-	if err != nil {
-		return nil, fmt.Errorf("counting outstanding id workflow steps: %w", err)
-	}
-	if cmdCt.StepID < 1 {
-		return nil, fmt.Errorf("no step ID found (id=%s, uuid=%s)", id, sc.CommandUUID)
-	}
 
-	if cmdCt.Count > 1 {
-		// if there are other uncompleted commands for us for this step
-		// then just update this commands results for another command
-		// to come in.
-		err = s.q.UpdateIDCommand(ctx, sqlc.UpdateIDCommandParams{
-			Completed: sc.Completed,
-			Result:    sc.ResultReport,
-			// where
+	// The completion decision is made inside the transaction, from the rows it
+	// locks -- not from a count read beforehand, which the worker's timeout
+	// sweep could invalidate before the transaction acted on it. See
+	// GetIDCommandsByStepIDAndLock.
+	err := tx(ctx, s.db, s.q, func(ctx context.Context, _ *sql.Tx, qtx *sqlc.Queries) error {
+		var err error
+		stepID, err = qtx.GetStepIDByCommandUUID(ctx, sqlc.GetStepIDByCommandUUIDParams{
 			EnrollmentID: id,
 			CommandUuid:  sc.CommandUUID,
 		})
 		if err != nil {
-			return nil, fmt.Errorf("updating id command: %w", err)
+			return fmt.Errorf("get step id (id=%s, uuid=%s): %w", id, sc.CommandUUID, err)
 		}
-		return nil, nil
-	}
+		if stepID < 1 {
+			return fmt.Errorf("no step ID found (id=%s, uuid=%s)", id, sc.CommandUUID)
+		}
 
-	// reaching here implies this is the last command to be completed
-	// for the workflow step, for this instance ID for this enrollment ID.
-
-	var ret *storage.StepResult
-
-	err = tx(ctx, s.db, s.q, func(ctx context.Context, _ *sql.Tx, qtx *sqlc.Queries) error {
-		sd, err := qtx.GetStepByID(ctx, cmdCt.StepID)
+		// locks this enrollment's rows for the step, and only those
+		cmdR, err := qtx.GetIDCommandsByStepIDAndLock(ctx, sqlc.GetIDCommandsByStepIDAndLockParams{
+			EnrollmentID: id,
+			StepID:       stepID,
+		})
 		if err != nil {
-			return fmt.Errorf("get step by id (%d): %w", cmdCt.StepID, err)
+			return fmt.Errorf("get id commands by step by id (%d): %w", stepID, err)
+		}
+
+		var outstanding int
+		for _, dbSC := range cmdR {
+			if dbSC.CommandUuid != sc.CommandUUID && !dbSC.Completed {
+				outstanding++
+			}
+		}
+
+		if outstanding > 0 {
+			// other commands of ours for this step are still outstanding.
+			// record this result for whichever of them comes in last.
+			err = qtx.UpdateIDCommand(ctx, sqlc.UpdateIDCommandParams{
+				Completed: sc.Completed,
+				Result:    sc.ResultReport,
+				// where
+				EnrollmentID: id,
+				CommandUuid:  sc.CommandUUID,
+			})
+			if err != nil {
+				return fmt.Errorf("updating id command: %w", err)
+			}
+			return nil
+		}
+
+		// reaching here implies this is the last command to be completed
+		// for the workflow step, for this instance ID for this enrollment ID.
+
+		sd, err := qtx.GetStepByID(ctx, stepID)
+		if err != nil {
+			return fmt.Errorf("get step by id (%d): %w", stepID, err)
 		}
 
 		ret = &storage.StepResult{
@@ -97,15 +120,10 @@ func (s *MySQLStorage) StoreCommandResponseAndRetrieveCompletedStep(ctx context.
 			Commands: []storage.StepCommandResult{*sc},
 		}
 
-		cmdR, err := qtx.GetIDCommandsByStepIDAndLock(ctx, sqlc.GetIDCommandsByStepIDAndLockParams{
-			EnrollmentID: id,
-			ID:           cmdCt.StepID,
-		})
-		if err != nil {
-			return fmt.Errorf("get id commands by step by id (%d): %w", cmdCt.StepID, err)
-		}
-
 		for _, dbSC := range cmdR {
+			if dbSC.CommandUuid == sc.CommandUUID {
+				continue // this command: already included, above
+			}
 			ret.Commands = append(ret.Commands, storage.StepCommandResult{
 				RequestType:  dbSC.RequestType,
 				CommandUUID:  dbSC.CommandUuid,
@@ -116,15 +134,10 @@ func (s *MySQLStorage) StoreCommandResponseAndRetrieveCompletedStep(ctx context.
 
 		err = qtx.RemoveIDCommandsByStepID(ctx, sqlc.RemoveIDCommandsByStepIDParams{
 			EnrollmentID: id,
-			StepID:       cmdCt.StepID,
+			StepID:       stepID,
 		})
 		if err != nil {
-			return fmt.Errorf("remove id commands by step by id (%d): %w", cmdCt.StepID, err)
-		}
-
-		err = qtx.DeleteWorkflowStepHavingNoCommandsByStepID(ctx, cmdCt.StepID)
-		if err != nil {
-			return fmt.Errorf("delete workflow with no commands (%d): %w", cmdCt.StepID, err)
+			return fmt.Errorf("remove id commands by step by id (%d): %w", stepID, err)
 		}
 
 		return nil
@@ -132,7 +145,111 @@ func (s *MySQLStorage) StoreCommandResponseAndRetrieveCompletedStep(ctx context.
 	if err != nil {
 		return ret, fmt.Errorf("tx step completed: %w", err)
 	}
+	if ret == nil {
+		return nil, nil
+	}
+
+	// The step result is complete and committed; what follows only reclaims
+	// the step row. Its error is logged rather than returned: the caller
+	// discards the step result if we return one (see the engine's step
+	// completion handling), and losing a workflow step is far worse than
+	// leaving a row behind for the cost of the collection having failed.
+	if err = s.collectFinishedSteps(ctx, []int64{stepID}); err != nil {
+		ctxlog.Logger(ctx, s.logger).Info(
+			logkeys.Message, "collecting finished step",
+			logkeys.EnrollmentID, id,
+			logkeys.CommandUUID, sc.CommandUUID,
+			logkeys.Error, err,
+		)
+	}
+
 	return ret, nil
+}
+
+// collectFinishedSteps deletes those of stepIDs that nothing refers to any
+// more, together with any raw commands still held for them.
+//
+// Must be called after the caller's own transaction has committed, never from
+// within it. Whether a step is finished is a question about rows other
+// enrollments own: answering it inside a transaction means locking either
+// those rows or the step they all share, which is what serialized the fan-out.
+// Asked afterwards it needs no lock at all.
+//
+// The trade is that a step can be left behind -- two callers committing at the
+// same instant can each still see the other's rows, a collector that finds the
+// step already claimed leaves it rather than waiting, and a process that stops
+// between the two phases never gets here. An uncollected step is inert, but it
+// is not reclaimed.
+//
+// Work is done in chunks, each its own transaction. A chunk that fails does
+// not stop the others: no invariant spans them, so a step left behind by one
+// is only the same inert row the paragraph above already allows for.
+func (s *MySQLStorage) collectFinishedSteps(ctx context.Context, stepIDs []int64) error {
+	var chunks, failed int
+	var lastErr error
+
+	for len(stepIDs) > 0 {
+		chunk := stepIDs
+		if len(chunk) > collectChunkSize {
+			chunk = chunk[:collectChunkSize]
+		}
+		stepIDs = stepIDs[len(chunk):]
+
+		chunks++
+		if err := s.collectChunk(ctx, chunk); err != nil {
+			// carry on: the remaining chunks are unaffected. only the last
+			// error is kept -- they are overwhelmingly the same error, and
+			// the count is what says how much was not collected.
+			failed++
+			lastErr = err
+		}
+	}
+
+	if lastErr != nil {
+		return fmt.Errorf("collecting steps (%d of %d chunks failed), last error: %w", failed, chunks, lastErr)
+	}
+	return nil
+}
+
+// collectChunkSize bounds how many step IDs are handled at once. Each chunk
+// becomes one IN list -- MySQL allows 65535 placeholders in a prepared
+// statement -- and one transaction's worth of binlog, so keeping it small
+// bounds both, and keeps the claim below from holding its locks for long.
+const collectChunkSize = 1000
+
+// collectChunk collects a single chunk of step IDs. See collectFinishedSteps.
+func (s *MySQLStorage) collectChunk(ctx context.Context, stepIDs []int64) error {
+	// deliberately not in a transaction: see collectFinishedSteps.
+	unreferenced, err := s.q.SelectUnreferencedStepIDs(ctx, stepIDs)
+	if err != nil {
+		return fmt.Errorf("selecting unreferenced steps: %w", err)
+	}
+	if len(unreferenced) < 1 {
+		return nil
+	}
+
+	// the claim has to hold its lock through the deletes, so these do want a
+	// transaction.
+	return tx(ctx, s.db, s.q, func(ctx context.Context, _ *sql.Tx, qtx *sqlc.Queries) error {
+		claimed, err := qtx.SelectStepIDsForDelete(ctx, unreferenced)
+		if err != nil {
+			return fmt.Errorf("claiming steps: %w", err)
+		}
+		if len(claimed) < 1 {
+			return nil
+		}
+
+		// raw commands are only kept to enqueue a NotUntil step later. they
+		// go with the step, and must go first to satisfy their foreign key.
+		if err = qtx.DeleteStepCommandsByStepIDs(ctx, claimed); err != nil {
+			return fmt.Errorf("deleting step commands: %w", err)
+		}
+
+		if err = qtx.DeleteStepsByStepIDs(ctx, claimed); err != nil {
+			return fmt.Errorf("deleting steps: %w", err)
+		}
+		return nil
+	})
 }
 
 // StoreStep stores a step and its commands for later state tracking.
@@ -207,9 +324,31 @@ func (s *MySQLStorage) CancelSteps(ctx context.Context, id, workflowName string)
 	if id == "" {
 		return errors.New("must supply both id and workflow name")
 	}
-	return tx(ctx, s.db, s.q, func(ctx context.Context, _ *sql.Tx, qtx *sqlc.Queries) error {
+	var stepIDs []int64
+
+	err := tx(ctx, s.db, s.q, func(ctx context.Context, _ *sql.Tx, qtx *sqlc.Queries) error {
+		// note the steps we're about to orphan before we orphan them.
+		// finding them again afterwards, by scanning for any step that has
+		// no commands, is work proportional to the whole steps table.
+		var err error
 		if workflowName != "" {
-			err := qtx.DeleteIDCommandByWorkflow(ctx, sqlc.DeleteIDCommandByWorkflowParams{
+			stepIDs, err = qtx.GetStepIDsByEnrollmentIDAndWorkflowName(ctx, sqlc.GetStepIDsByEnrollmentIDAndWorkflowNameParams{
+				EnrollmentID: id,
+				WorkflowName: workflowName,
+			})
+		} else {
+			stepIDs, err = qtx.GetStepIDsByEnrollmentID(ctx, id)
+		}
+		if err != nil {
+			return fmt.Errorf("get step ids (%s, %s): %w", id, workflowName, err)
+		}
+
+		if len(stepIDs) < 1 {
+			return nil
+		}
+
+		if workflowName != "" {
+			err = qtx.DeleteIDCommandsByWorkflowName(ctx, sqlc.DeleteIDCommandsByWorkflowNameParams{
 				EnrollmentID: id,
 				WorkflowName: workflowName,
 			})
@@ -217,29 +356,36 @@ func (s *MySQLStorage) CancelSteps(ctx context.Context, id, workflowName string)
 				return fmt.Errorf("delete id command by workflow (%s, %s): %w", id, workflowName, err)
 			}
 		} else {
-			err := qtx.DeleteIDCommands(ctx, id)
-			if err != nil {
+			if err = qtx.DeleteIDCommands(ctx, id); err != nil {
 				return fmt.Errorf("delete id command (%s): %w", id, err)
-			}
-		}
-
-		err := qtx.DeleteUnusedStepCommands(ctx)
-		if err != nil {
-			return fmt.Errorf("delete unused step commands: %w", err)
-		}
-
-		if workflowName != "" {
-			err = qtx.DeleteWorkflowStepHavingNoCommandsByWorkflowName(ctx, workflowName)
-			if err != nil {
-				return fmt.Errorf("delete workflow step having no commands (%s): %w", workflowName, err)
-			}
-		} else {
-			if err = qtx.DeleteWorkflowStepHavingNoCommands(ctx); err != nil {
-				return fmt.Errorf("delete workflow step having no commands (%s): %w", workflowName, err)
 			}
 		}
 		return nil
 	})
+	if err != nil {
+		return err
+	}
+
+	// the cancel itself is done; the steps are collected separately so that
+	// cancelling one enrollment never waits on another. see
+	// collectFinishedSteps.
+	//
+	// its error is logged rather than returned for the same reason as in the
+	// completion path: the cancel has already committed, and the caller
+	// abandons the rest of the check-in event if we return an error --
+	// leaving in place the workflow status it was about to clear, which is
+	// the very thing the cancel exists to remove.
+	if err = s.collectFinishedSteps(ctx, stepIDs); err != nil {
+		ctxlog.Logger(ctx, s.logger).Info(
+			logkeys.Message, "collecting cancelled steps",
+			logkeys.EnrollmentID, id,
+			logkeys.WorkflowName, workflowName,
+			logkeys.GenericCount, len(stepIDs),
+			logkeys.Error, err,
+		)
+	}
+
+	return nil
 }
 
 // RetrieveWorkflowStarted returns the last time a workflow was started for id.

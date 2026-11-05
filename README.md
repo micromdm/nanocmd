@@ -124,4 +124,4 @@ There's a few reasons:
 * Older devices/OSes still need to support MDM v1.
 * Some MDM operations may continue to be (or stay) MDM v1-only.
 * Bugs or delays in Declarative Management features.
-* At the time it was written the workflows that were required were not avaialble as Declarative Management functionality yet.
+* At the time it was written the workflows that were required were not available as Declarative Management functionality yet.

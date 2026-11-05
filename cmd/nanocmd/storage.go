@@ -23,6 +23,8 @@ import (
 	storageprofinmem "github.com/micromdm/nanocmd/subsystem/profile/storage/inmem"
 	storageprofmysql "github.com/micromdm/nanocmd/subsystem/profile/storage/mysql"
 
+	"github.com/micromdm/nanolib/log"
+
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -35,7 +37,7 @@ type storageConfig struct {
 	filevault storagefv.FVRotate
 }
 
-func parseStorage(name, dsn, _ string) (*storageConfig, error) {
+func parseStorage(name, dsn, _ string, logger log.Logger) (*storageConfig, error) {
 	switch name {
 	case "inmem":
 		inv := storageinvinmem.New()
@@ -76,7 +78,10 @@ func parseStorage(name, dsn, _ string) (*storageConfig, error) {
 		if err != nil {
 			return nil, fmt.Errorf("creating filevault inmem storage: %w", err)
 		}
-		eng, err := storageengmysql.New(storageengmysql.WithDSN(dsn))
+		eng, err := storageengmysql.New(
+			storageengmysql.WithDSN(dsn),
+			storageengmysql.WithLogger(logger.With("storage", "mysql")),
+		)
 		if err != nil {
 			return nil, err
 		}
