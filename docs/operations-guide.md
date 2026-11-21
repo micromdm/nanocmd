@@ -327,10 +327,30 @@ A command plan (or cmdplan) is a named structured list of operations to send to 
 ```json
 {
   "profile_names": [
-    "test1"
+    "profile1"
   ],
-  "manifest_urls": [],
-  "device_configured": true
+  "manifest_urls": [
+    "https://example.com/manifest"
+  ],
+  "device_configured": true,
+  "account_config": {
+    "dont_auto_populate_primary_account_info": false,
+    "lock_primary_account_info": true,
+    "primary_account_full_name": "John Appleseed",
+    "primary_account_user_name": "john.appleseed",
+    "request_requires_network_tether": false,
+    "set_primary_setup_account_as_regular_user": true,
+    "skip_primary_setup_account_creation": false,
+    "auto_setup_admin_accounts": [
+      {
+        "full_name": "Local Admin",
+        "hidden": true,
+        "password_hash": "qofuhwaiuf.......",
+        "short_name": "localadmin"
+      }
+    ],
+    "managed_local_user_short_name": "john.appleseed",
+  }
 }
 ```
 
